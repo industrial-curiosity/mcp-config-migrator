@@ -1,3 +1,5 @@
+# Tasks: Add mcp-config-migrator
+
 ## 1. Project setup
 
 - [ ] 1.1 Initialize `package.json` (name `mcp-config-migrator`, `type: module`, `bin: { "mcp-config-migrator": "dist/cli.js" }`, Node engine `>=18`)
@@ -39,6 +41,7 @@
 - [ ] 5.5 For each conflict, show the diff and prompt the user for keep-target/take-source/skip
 - [ ] 5.6 Show the migration summary and require explicit confirmation before writing
 - [ ] 5.7 On confirmation, back up the existing target file (if present) and write the merged config via the target adapter
+- [ ] 5.7a If the target is Claude Code project scope (`.mcp.json`) and the write adds or changes any server entries, show a notice listing those server names and the `claude mcp reset-project-choices` command before/with the success message
 - [ ] 5.8 On decline, exit without modifying any file
 - [ ] 5.9 Handle cancellation (Ctrl+C / clack cancel) at any prompt by exiting immediately without writing or backing up
 - [ ] 5.10 After a successful write, run the post-migration cleanup step: multi-select prompt listing all server names now in the target config, remove selected entries, and re-save only if any were removed
@@ -49,6 +52,7 @@
 - [ ] 6.2 Unit test: Claude Code adapter preserves unrelated top-level keys in `~/.claude.json` when writing
 - [ ] 6.3 Unit tests for the migration engine: classification (add/unchanged/conflict), merge application for each resolution choice, summary counts
 - [ ] 6.4 CLI workflow tests covering: happy path with additions only, a run with conflicts resolved each of the three ways, cancellation mid-flow, no-op detection, and post-migration cleanup (with and without removals)
+- [ ] 6.5 CLI workflow test: writing added/changed entries to a Claude Code project-scope target shows the re-approval notice naming the affected servers; no notice appears for other targets or no-op writes
 
 ## 7. Packaging and docs
 

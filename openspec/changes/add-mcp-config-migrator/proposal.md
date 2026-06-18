@@ -1,3 +1,5 @@
+# Proposal: Add mcp-config-migrator
+
 ## Why
 
 Developers who use VSCode, Cursor, and Claude Code side by side currently configure MCP servers separately in each tool, using different file locations and schemas. There is no tool to migrate or merge MCP server entries between them, so switching tools or keeping multiple tools in sync means manually re-typing configuration.
@@ -16,11 +18,13 @@ Developers who use VSCode, Cursor, and Claude Code side by side currently config
 ## Capabilities
 
 ### New Capabilities
+
 - `ide-config-adapters`: Knowledge of each supported IDE's MCP config file location (including env var overrides and OS-specific defaults), on-disk schema, and read/write/serialize operations, plus a common normalized representation for MCP server entries.
 - `config-migration-engine`: Diffing two normalized MCP configs, classifying entries as add/unchanged/conflict, applying user-chosen conflict resolutions, and producing a merged result.
 - `cli-workflow`: The end-to-end interactive CLI flow — IDE selection, config path prompts, diff/conflict prompts, write confirmation, and post-migration cleanup prompts.
 
 ### Modified Capabilities
+
 (none — this is a new project with no existing specs)
 
 ## Impact

@@ -1,3 +1,5 @@
+# Design: Add mcp-config-migrator
+
 ## Context
 
 MCP server configuration is stored differently by each target IDE, both in *location* and in *schema*. Research findings (current as of June 2026):
@@ -47,6 +49,8 @@ Key implications:
 
 8. **Prompt library: `@clack/prompts`.** Chosen over `inquirer` (heavier dependency, older callback-oriented API) and bare `prompts` (less polished cancel/abort handling) for a modern, lightweight interactive experience consistent with current CLI tooling norms.
 
+9. **Friendly re-approval warning for new Claude Code project-scoped servers.** Claude Code prompts for trust approval the first time it sees a project-scoped server in `.mcp.json`. When the migration adds or changes project-scoped entries for a Claude Code target, the CLI surfaces a clear, specific notice (naming the affected servers and the `claude mcp reset-project-choices` command) rather than leaving the user to discover the re-approval prompt unexplained inside Claude Code later. This is part of the "as friendly and helpful as possible" UX bar — silence here would be confusing, not neutral.
+
 ## Risks / Trade-offs
 
 - **[Risk]** `CLAUDE_CONFIG_DIR` redirection behavior is undocumented by Anthropic and only confirmed via community bug reports → **Mitigation**: treat the computed path as a suggestion in an editable prompt; never assume it's correct.
@@ -57,6 +61,8 @@ Key implications:
 
 ## Open Questions
 
-- Should a future version support migrating across all three IDEs in one run (not just a single source→target pair)?
-- Should we add a non-interactive/CI mode driven by flags instead of prompts?
-- When new project-scoped servers are added to Claude Code's `.mcp.json`, should the CLI warn the user they'll need to re-approve them (`claude mcp reset-project-choices`) since Claude Code prompts for trust on project-scoped servers?
+Resolved (2026-06-18):
+
+- Multi-IDE round-robin migration in one run: **no**, stays out of scope — single source→target pair only, as already stated in Non-Goals.
+- Non-interactive/CI flag-driven mode: **no**, stays out of scope for this and future versions unless requested.
+- Warning about Claude Code project-scope re-approval: **yes** — see Decision 9.
