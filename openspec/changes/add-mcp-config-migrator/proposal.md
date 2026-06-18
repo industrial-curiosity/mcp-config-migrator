@@ -11,7 +11,7 @@ Developers who use VSCode, Cursor, and Claude Code side by side currently config
 - Prompts for the source and target MCP config file paths, pre-filling each IDE's known default location and respecting relevant environment variable overrides (e.g. `CLAUDE_CONFIG_DIR` for Claude Code).
 - Reads and normalizes each IDE's MCP config format into a common in-memory representation, accounting for schema differences between IDEs (e.g. key names, transport fields, scope of config file).
 - Computes a diff between source and target: entries only in source are added to target; entries identical in both are left alone; entries present in both with different definitions are flagged as conflicts.
-- Shows the user a diff for conflicting entries and prompts them to choose how to resolve each one (keep target, take source, skip).
+- Shows the user a diff for conflicting entries and prompts them to choose how to resolve each one (accept target, accept source).
 - Writes the merged result back to the target IDE's config file in its native format, preserving unrelated existing target content.
 - After migration, offers a cleanup step letting the user select target MCP entries to remove.
 

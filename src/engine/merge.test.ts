@@ -20,9 +20,8 @@ describe("applyMerge", () => {
   });
 
   it.each([
-    ["keep-target", "target-version"],
-    ["skip", "target-version"],
-    ["take-source", "source-version"],
+    ["accept-target", "target-version"],
+    ["accept-source", "source-version"],
   ] as const)("resolves a conflict with %s to %s", (resolution, expectedCommand) => {
     const source: NormalizedConfig = {
       servers: [{ name: "foo", transport: "stdio", command: "source-version" }],

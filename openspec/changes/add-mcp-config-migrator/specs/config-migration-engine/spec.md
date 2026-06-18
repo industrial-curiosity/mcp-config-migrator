@@ -32,16 +32,16 @@ For each entry classified as Conflict, the system SHALL display a diff between t
 
 ### Requirement: Conflict resolution choice
 
-For each Conflict entry, the system SHALL let the user choose exactly one of: keep the target's existing definition, take the source's definition, or skip (leave the target unchanged for this entry).
+For each Conflict entry, the system SHALL let the user choose exactly one of: accept the source's definition, or accept the target's existing definition.
 
-#### Scenario: User takes the source version
+#### Scenario: User accepts the source version
 
-- **WHEN** the user chooses "take source" for a conflicting entry
+- **WHEN** the user chooses "accept source" for a conflicting entry
 - **THEN** the merged configuration uses the source's definition for that server name
 
-#### Scenario: User keeps the target version
+#### Scenario: User accepts the target version
 
-- **WHEN** the user chooses "keep target" or "skip" for a conflicting entry
+- **WHEN** the user chooses "accept target" for a conflicting entry
 - **THEN** the merged configuration retains the target's existing definition for that server name unchanged
 
 ### Requirement: Merge application
@@ -64,9 +64,9 @@ Before overwriting an existing target config file, the system SHALL save a backu
 
 ### Requirement: Migration summary
 
-After applying a merge, the system SHALL report the number of entries added, the number of conflicts resolved broken down by the choice made for each, and the number of entries left unchanged.
+After applying a merge, the system SHALL report, for each of added, unchanged, and conflicting entries, both the count and the server names in that category, with conflicts further broken down by the resolution choice made for each.
 
 #### Scenario: Summary after a migration with conflicts
 
 - **WHEN** a migration includes additions, conflicts, and unchanged entries
-- **THEN** the system reports counts for each category, including how each conflict was resolved
+- **THEN** the system reports the count and server names for each category, including how each conflict was resolved

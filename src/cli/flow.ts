@@ -59,9 +59,8 @@ async function resolveConflicts(conflicts: ClassifiedEntry[]): Promise<ConflictR
     const resolution = await p.select<ConflictResolution>({
       message: `Resolve "${entry.name}":`,
       options: [
-        { value: "keep-target", label: "Keep target's existing definition" },
-        { value: "take-source", label: "Take source's definition" },
-        { value: "skip", label: "Skip (leave target unchanged)" },
+        { value: "accept-target", label: "Accept target's definition" },
+        { value: "accept-source", label: "Accept source's definition" },
       ],
     });
     resolutions[entry.name] = unwrap(resolution);
@@ -73,7 +72,7 @@ function changedServerNames(classifications: ClassifiedEntry[], resolutions: Con
   return classifications
     .filter(
       (entry) =>
-        entry.kind === "add" || (entry.kind === "conflict" && resolutions[entry.name] === "take-source"),
+        entry.kind === "add" || (entry.kind === "conflict" && resolutions[entry.name] === "accept-source"),
     )
     .map((entry) => entry.name);
 }
@@ -113,11 +112,15 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   const resolutions = await resolveConflicts(conflicts);
 
   const summary = summarize(classifications, resolutions);
+  const formatCategory = (label: string, category: { count: number; names: string[] }): string =>
+    category.count === 0 ? `${label} (0)` : `${label} (${category.count}): ${category.names.join(", ")}`;
   p.note(
     [
-      `Added: ${summary.added}`,
-      `Unchanged: ${summary.unchanged}`,
-      `Conflicts resolved: ${summary.conflicts.total} (keep target: ${summary.conflicts.keepTarget}, take source: ${summary.conflicts.takeSource}, skip: ${summary.conflicts.skip})`,
+      formatCategory("Added", summary.added),
+      formatCategory("Unchanged", summary.unchanged),
+      `Conflicts resolved (${summary.conflicts.total}):`,
+      `  ${formatCategory("accept target", summary.conflicts.acceptTarget)}`,
+      `  ${formatCategory("accept source", summary.conflicts.acceptSource)}`,
     ].join("\n"),
     "Migration summary",
   );

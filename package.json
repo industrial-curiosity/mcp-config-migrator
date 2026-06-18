@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "run:local": "npm build && node dist/cli.js",
+    "local": "npm run build && node dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",

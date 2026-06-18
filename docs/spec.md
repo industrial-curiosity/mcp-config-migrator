@@ -31,8 +31,8 @@ VS Code's adapter uses `jsonc-parser` so that comments in `mcp.json` survive a w
 
 - `classify.ts` — for each source entry, classifies it relative to the target by name: `add` (target lacks it), `unchanged` (deeply equal), or `conflict` (same name, different definition). Target-only entries aren't classified — they pass through untouched.
 - `diff.ts` — renders a `+`/`-` line diff (via the `diff` package) between a conflicting entry's target and source JSON, for display before asking the user to resolve it.
-- `merge.ts` — `applyMerge` produces the final config: every `add` entry, every `conflict` per its resolution (`keep-target` / `take-source` / `skip`), every `unchanged` entry, and every target-only entry — all untouched unless explicitly resolved otherwise.
-- `summary.ts` — counts for the pre-write summary, and `isNoOp` to detect when a migration would change nothing.
+- `merge.ts` — `applyMerge` produces the final config: every `add` entry, every `conflict` per its resolution (`accept-target` / `accept-source`), every `unchanged` entry, and every target-only entry — all untouched unless explicitly resolved otherwise.
+- `summary.ts` — counts and server names per category (added, unchanged, conflicts by resolution) for the pre-write summary, and `isNoOp` to detect when a migration would change nothing.
 - `write.ts` — `saveWithBackup` wraps an adapter's `save` with a pre-write backup of the existing target file (a timestamped copy beside the original; `null` if there was no existing file to back up).
 
 ### CLI (`src/cli/`)

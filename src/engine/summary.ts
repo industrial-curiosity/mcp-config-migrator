@@ -1,44 +1,54 @@
 import type { ClassifiedEntry } from "./classify.js";
 import type { ConflictResolutions } from "./merge.js";
 
+export interface CategorySummary {
+  count: number;
+  names: string[];
+}
+
 export interface MigrationSummary {
-  added: number;
-  unchanged: number;
+  added: CategorySummary;
+  unchanged: CategorySummary;
   conflicts: {
     total: number;
-    keepTarget: number;
-    takeSource: number;
-    skip: number;
+    acceptTarget: CategorySummary;
+    acceptSource: CategorySummary;
   };
+}
+
+function toCategory(names: string[]): CategorySummary {
+  return { count: names.length, names };
 }
 
 export function summarize(
   classifications: ClassifiedEntry[],
   resolutions: ConflictResolutions,
 ): MigrationSummary {
-  let added = 0;
-  let unchanged = 0;
-  let keepTarget = 0;
-  let takeSource = 0;
-  let skip = 0;
+  const added: string[] = [];
+  const unchanged: string[] = [];
+  const acceptTarget: string[] = [];
+  const acceptSource: string[] = [];
 
   for (const entry of classifications) {
     if (entry.kind === "add") {
-      added++;
+      added.push(entry.name);
     } else if (entry.kind === "unchanged") {
-      unchanged++;
+      unchanged.push(entry.name);
     } else {
-      const resolution = resolutions[entry.name] ?? "keep-target";
-      if (resolution === "keep-target") keepTarget++;
-      else if (resolution === "take-source") takeSource++;
-      else skip++;
+      const resolution = resolutions[entry.name] ?? "accept-target";
+      if (resolution === "accept-target") acceptTarget.push(entry.name);
+      else acceptSource.push(entry.name);
     }
   }
 
   return {
-    added,
-    unchanged,
-    conflicts: { total: keepTarget + takeSource + skip, keepTarget, takeSource, skip },
+    added: toCategory(added),
+    unchanged: toCategory(unchanged),
+    conflicts: {
+      total: acceptTarget.length + acceptSource.length,
+      acceptTarget: toCategory(acceptTarget),
+      acceptSource: toCategory(acceptSource),
+    },
   };
 }
 

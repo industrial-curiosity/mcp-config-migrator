@@ -27,7 +27,7 @@ Key implications:
 **Non-Goals:**
 - Supporting VS Code Insiders/VSCodium, Claude Desktop (a different product from Claude Code), Windsurf, or other MCP-capable editors in v1.
 - Two-way sync or a watch/daemon mode — this is a one-shot interactive run.
-- Field-level merging within a single conflicting server entry — conflict resolution is whole-entry (keep target / take source / skip).
+- Field-level merging within a single conflicting server entry — conflict resolution is whole-entry (accept target / accept source).
 - Reading/writing Claude Code's "local" scope, which lives as per-project nested state inside `~/.claude.json` rather than under the top-level `mcpServers` key. Only top-level user scope (`~/.claude.json`) and project scope (`.mcp.json`) are supported.
 - A non-interactive/CI flag-driven mode (may follow later; see Open Questions).
 
@@ -41,11 +41,11 @@ Key implications:
 
 4. **`jsonc-parser` for VS Code's adapter; strict `JSON.parse` for Cursor/Claude Code.** VS Code config files may contain comments; Cursor and Claude Code's files are plain JSON. Using a JSONC-aware parser only where needed avoids over-engineering the common case.
 
-5. **Whole-entry conflict resolution**, not field-level merge. When a server name exists in both source and target with different definitions, the user is shown a line diff (via the `diff` package, pretty-printed JSON per entry) and picks one of: keep target, take source, or skip. Field-level merge was considered and deferred — it adds significant UI complexity for a case (partial overlap of one server's settings) that's rare in practice.
+5. **Whole-entry conflict resolution**, not field-level merge. When a server name exists in both source and target with different definitions, the user is shown a line diff (via the `diff` package, pretty-printed JSON per entry) and picks one of: accept target or accept source. A third "skip / decide later" option was considered but deferred to a later spec — "keep target" and "skip" were found to be indistinguishable in behavior and only added confusion to the choice. Field-level merge was also considered and deferred — it adds significant UI complexity for a case (partial overlap of one server's settings) that's rare in practice.
 
 6. **Always-editable, platform/env-aware default path suggestions.** Each adapter exposes `resolveDefaultPaths()` returning labeled candidates (e.g. "User", "Project (.mcp.json)") computed from `process.platform` and relevant env vars (only `CLAUDE_CONFIG_DIR` is known to apply). The CLI pre-fills these into an editable text prompt — it never reads or writes a path the user didn't see and confirm.
 
-7. **Pre-write backup + final confirmation.** Before saving, the CLI writes a timestamped backup of the existing target file (if any) alongside it, and shows a final summary (counts of added/conflicts-resolved/skipped) before committing the write. This is the safety net for the inherent risk of mutating a file another running IDE may also depend on.
+7. **Pre-write backup + final confirmation.** Before saving, the CLI writes a timestamped backup of the existing target file (if any) alongside it, and shows a final summary (counts and server names for added/unchanged/conflicts-resolved) before committing the write. This is the safety net for the inherent risk of mutating a file another running IDE may also depend on.
 
 8. **Prompt library: `@clack/prompts`.** Chosen over `inquirer` (heavier dependency, older callback-oriented API) and bare `prompts` (less polished cancel/abort handling) for a modern, lightweight interactive experience consistent with current CLI tooling norms.
 

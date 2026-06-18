@@ -81,7 +81,6 @@ describe("runCli", () => {
             same1: { command: "shared" },
             keep1: { command: "source-keep" },
             take1: { command: "source-take" },
-            skip1: { command: "source-skip" },
           },
         }),
         "utf8",
@@ -93,7 +92,6 @@ describe("runCli", () => {
             same1: { command: "shared" },
             keep1: { command: "target-keep" },
             take1: { command: "target-take" },
-            skip1: { command: "target-skip" },
             onlyInTarget: { command: "target-only" },
           },
         }),
@@ -105,10 +103,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("project")
-        // conflicts, in source-entry order: keep1, take1, skip1
-        .mockResolvedValueOnce("keep-target")
-        .mockResolvedValueOnce("take-source")
-        .mockResolvedValueOnce("skip");
+        // conflicts, in source-entry order: keep1, take1
+        .mockResolvedValueOnce("accept-target")
+        .mockResolvedValueOnce("accept-source");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
@@ -121,10 +118,12 @@ describe("runCli", () => {
         same1: { command: "shared" },
         keep1: { command: "target-keep" },
         take1: { command: "source-take" },
-        skip1: { command: "target-skip" },
         onlyInTarget: { command: "target-only" },
       });
       expect((await readdir(dir)).some((f) => f.includes(".bak."))).toBe(true);
+      expect(note).toHaveBeenCalledWith(expect.stringContaining("Added (1): add1"), "Migration summary");
+      expect(note).toHaveBeenCalledWith(expect.stringContaining("accept target (1): keep1"), "Migration summary");
+      expect(note).toHaveBeenCalledWith(expect.stringContaining("accept source (1): take1"), "Migration summary");
     });
   });
 

@@ -28,8 +28,8 @@
 
 - [x] 4.1 Implement entry classification (`add` / `unchanged` / `conflict`) comparing source and target `NormalizedConfig`s by server name
 - [x] 4.2 Implement conflict diff rendering using the `diff` package over pretty-printed JSON of each conflicting entry's source vs target definition
-- [x] 4.3 Implement merge application: given classifications and a resolution choice per conflict (`keep-target` / `take-source` / `skip`), produce the merged `NormalizedConfig`
-- [x] 4.4 Implement the migration summary (counts of added, conflicts by resolution choice, unchanged)
+- [x] 4.3 Implement merge application: given classifications and a resolution choice per conflict (`accept-target` / `accept-source`), produce the merged `NormalizedConfig`
+- [x] 4.4 Implement the migration summary (counts and server names of added, conflicts by resolution choice, unchanged)
 - [x] 4.5 Wire the backup utility into the write path so a backup is created whenever an existing target file is about to be overwritten
 
 ## 5. CLI workflow
@@ -38,8 +38,8 @@
 - [x] 5.2 Implement source IDE selection, then source scope/path prompt (pre-filled with the adapter's computed default, editable)
 - [x] 5.3 Implement target IDE selection, then target scope/path prompt (same pattern)
 - [x] 5.4 Load both configs via their adapters and run classification; if there are no additions and no conflicts, report "nothing to migrate" and exit without writing or backing up
-- [x] 5.5 For each conflict, show the diff and prompt the user for keep-target/take-source/skip
-- [x] 5.6 Show the migration summary and require explicit confirmation before writing
+- [x] 5.5 For each conflict, show the diff and prompt the user for accept-target/accept-source
+- [x] 5.6 Show the migration summary, including the server names in each category, and require explicit confirmation before writing
 - [x] 5.7 On confirmation, back up the existing target file (if present) and write the merged config via the target adapter
 - [x] 5.7a If the target is Claude Code project scope (`.mcp.json`) and the write adds or changes any server entries, show a notice listing those server names and the `claude mcp reset-project-choices` command before/with the success message
 - [x] 5.8 On decline, exit without modifying any file
@@ -50,8 +50,8 @@
 
 - [x] 6.1 Unit tests per adapter: parse/serialize round-trip for stdio and remote entries, default path computation per OS (mock `process.platform`/`process.env`), missing-file-as-empty behavior
 - [x] 6.2 Unit test: Claude Code adapter preserves unrelated top-level keys in `~/.claude.json` when writing
-- [x] 6.3 Unit tests for the migration engine: classification (add/unchanged/conflict), merge application for each resolution choice, summary counts
-- [x] 6.4 CLI workflow tests covering: happy path with additions only, a run with conflicts resolved each of the three ways, cancellation mid-flow, no-op detection, and post-migration cleanup (with and without removals)
+- [x] 6.3 Unit tests for the migration engine: classification (add/unchanged/conflict), merge application for each resolution choice, summary counts and server names per category
+- [x] 6.4 CLI workflow tests covering: happy path with additions only, a run with conflicts resolved each of the two ways, cancellation mid-flow, no-op detection, and post-migration cleanup (with and without removals)
 - [x] 6.5 CLI workflow test: writing added/changed entries to a Claude Code project-scope target shows the re-approval notice naming the affected servers; no notice appears for other targets or no-op writes
 
 ## 7. Packaging and docs

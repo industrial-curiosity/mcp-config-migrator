@@ -11,7 +11,6 @@ describe("summarize", () => {
         { name: "same", transport: "stdio", command: "node" },
         { name: "kept", transport: "stdio", command: "source" },
         { name: "taken", transport: "stdio", command: "source" },
-        { name: "skipped", transport: "stdio", command: "source" },
       ],
     };
     const target: NormalizedConfig = {
@@ -19,20 +18,22 @@ describe("summarize", () => {
         { name: "same", transport: "stdio", command: "node" },
         { name: "kept", transport: "stdio", command: "target" },
         { name: "taken", transport: "stdio", command: "target" },
-        { name: "skipped", transport: "stdio", command: "target" },
       ],
     };
     const classifications = classify(source, target);
     const summary = summarize(classifications, {
-      kept: "keep-target",
-      taken: "take-source",
-      skipped: "skip",
+      kept: "accept-target",
+      taken: "accept-source",
     });
 
     expect(summary).toEqual({
-      added: 1,
-      unchanged: 1,
-      conflicts: { total: 3, keepTarget: 1, takeSource: 1, skip: 1 },
+      added: { count: 1, names: ["added"] },
+      unchanged: { count: 1, names: ["same"] },
+      conflicts: {
+        total: 2,
+        acceptTarget: { count: 1, names: ["kept"] },
+        acceptSource: { count: 1, names: ["taken"] },
+      },
     });
   });
 });

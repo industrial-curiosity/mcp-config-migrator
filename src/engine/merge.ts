@@ -1,7 +1,7 @@
 import type { NormalizedConfig } from "../model/types.js";
 import type { ClassifiedEntry } from "./classify.js";
 
-export type ConflictResolution = "keep-target" | "take-source" | "skip";
+export type ConflictResolution = "accept-target" | "accept-source";
 
 export type ConflictResolutions = Record<string, ConflictResolution>;
 
@@ -21,11 +21,11 @@ export function applyMerge(
     if (entry.kind === "add") {
       resultByName.set(entry.name, entry.source);
     } else if (entry.kind === "conflict") {
-      const resolution = resolutions[entry.name] ?? "keep-target";
-      if (resolution === "take-source") {
+      const resolution = resolutions[entry.name] ?? "accept-target";
+      if (resolution === "accept-source") {
         resultByName.set(entry.name, entry.source);
       }
-      // keep-target / skip: target's existing value is already in the map.
+      // accept-target: target's existing value is already in the map.
     }
   }
 
