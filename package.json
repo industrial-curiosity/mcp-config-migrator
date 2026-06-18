@@ -1,0 +1,47 @@
+{
+  "name": "mcp-config-migrator",
+  "version": "0.1.0",
+  "description": "Interactively migrate and merge MCP server configurations between VS Code, Cursor, and Claude Code.",
+  "type": "module",
+  "bin": {
+    "mcp-config-migrator": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "run:local": "npm build && node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.5.1",
+    "diff": "^9.0.0",
+    "jsonc-parser": "^3.3.1"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/node": "^22.10.2",
+    "eslint": "^10.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
+    "vitest": "^4.1.9"
+  }
+}
