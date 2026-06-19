@@ -15,7 +15,10 @@
 
 - [x] 3.1 Add a backup-decision function (e.g. in `src/cli/backupFlow.ts`) that reads the persisted `configured` value and: appends silently for `"alwaysOn"`, skips silently for `"alwaysOff"`, or prompts for `"alwaysAsk"` with `p.select` options in order "Yes", "Yes, always" (default-selected), "No", "No, never". Only "Yes, always" and "No, never" write a new `configured` value (`"alwaysOn"`/`"alwaysOff"`); plain "Yes" and plain "No" decide this run only and leave `configured` at `"alwaysAsk"`.
 - [x] 3.2 Wire this into `src/cli/flow.ts`'s `runFlow()` between the write confirmation and the write itself, using the already-loaded pre-merge `targetConfig` plus `targetAdapter.id`/`target.scopeId`/`target.path` as the entry to back up.
-- [ ] 3.3 Add tests in `src/cli/flow.test.ts` (or a new `backupFlow.test.ts`) covering all three preference states and all four prompt choices, including that plain "Yes"/"No" do not change the persisted `configured` value.
+- [x] 3.3 Add tests in `src/cli/flow.test.ts` (or a new `backupFlow.test.ts`) covering all three preference states and all four prompt choices, including that plain "Yes"/"No" do not change the persisted `configured` value.
+- [x] 3.4 In `src/cli/backupFlow.ts`'s `maybeBackup`, after the user selects "Yes" or "Yes, always", add a `p.text` prompt for the backup storage location, pre-filled with the current `store.versionsPath` as an editable default; if the answer differs from the current effective location, persist it via `setBackupLocation` before appending the version.
+- [x] 3.5 After every backup that actually occurs (the "alwaysOn" silent path and both interactive "Yes"/"Yes, always" paths), display the storage location the backup was written to (e.g. via `p.log.success`) — this is the only feedback for the silent path, so it must not be skipped there.
+- [x] 3.6 Update `src/cli/backupFlow.test.ts` to cover: the location prompt appearing and its answer being honored for both "Yes" and "Yes, always", a changed location being persisted via `setBackupLocation`, and the location being displayed for all three paths that actually back up (silent "alwaysOn", "Yes", "Yes, always").
 
 ## 4. Restore command
 
@@ -38,4 +41,4 @@
 ## 7. Docs and spec sync
 
 - [x] 7.1 Confirm the delta specs in this change's `specs/` correctly capture the removed pre-write backup requirement and the new `backup-and-restore` capability, ready to land in `openspec/specs/` at archive time.
-- [x] 7.2 Update README.md and docs/spec.md to reflect any user-facing or architectural changes introduced by this change
+- [x] 7.2 Update README.md and docs/spec.md to reflect any user-facing or architectural changes introduced by this change, including the backup location prompt and the always-displayed backup location added in tasks 3.4–3.6

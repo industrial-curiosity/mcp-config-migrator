@@ -18,7 +18,7 @@ You'll be asked to:
 4. Confirm a summary (added / unchanged / conflicts resolved) before anything is written.
 5. After writing, optionally remove any server entries from the target as a cleanup step.
 
-Nothing is written to disk until you explicitly confirm. Right before the write, you'll be asked whether to back up the target's *current* MCP server entries (not the rest of the file) to a version history — answer "Yes, always" or "No, never" to stop being asked and remember that choice for future runs, or "Yes"/"No" to decide just this once. You can cancel at any prompt (Ctrl+C) with no changes made and no backup recorded.
+Nothing is written to disk until you explicitly confirm. Right before the write, you'll be asked whether to back up the target's *current* MCP server entries (not the rest of the file) to a version history — answer "Yes, always" or "No, never" to stop being asked and remember that choice for future runs, or "Yes"/"No" to decide just this once. Answering "Yes" (either form) also asks where to store the backup, pre-filled with the current default and editable; once a backup is written — including silently, when the preference is "always back up" — its storage location is always displayed. You can cancel at any prompt (Ctrl+C) with no changes made and no backup recorded.
 
 If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Code will ask you to re-approve the affected servers next time you open that project — the CLI tells you which servers and reminds you of `claude mcp reset-project-choices` if you'd rather not be prompted again.
 
@@ -79,6 +79,9 @@ npx mcp-config-migrator --help                   # or -h, /?
 │  Yes
 ◆  Back up the current MCP servers in ./.mcp.json before writing?
 │  ● Yes, always
+◆  Backup storage location:
+│  ~/mcp-config-migrator.versions.json
+✔  Backed up current MCP servers for ./.mcp.json to ~/mcp-config-migrator.versions.json
 ✔  Wrote merged config to ./.mcp.json
 ◆  Remove any MCP servers from the target before finishing? (none required)
 │  (none selected)

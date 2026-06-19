@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import type { NormalizedConfig } from "../model/types.js";
-import { appendVersion, readVersionsStore, setPreference } from "../model/versionsStore.js";
+import { appendVersion, readVersionsStore, setBackupLocation, setPreference } from "../model/versionsStore.js";
 import { unwrap } from "./cancel.js";
 
 export interface BackupTarget {
@@ -23,7 +23,7 @@ export async function maybeBackup(settingsPath: string, target: BackupTarget): P
 
   if (store.configured === "alwaysOff") return;
   if (store.configured === "alwaysOn") {
-    await backupNow(settingsPath, target);
+    await backupNow(settingsPath, store.versionsPath, target);
     return;
   }
 
@@ -41,7 +41,16 @@ export async function maybeBackup(settingsPath: string, target: BackupTarget): P
   );
 
   if (choice === "yes" || choice === "yes-always") {
-    await backupNow(settingsPath, target);
+    const location = unwrap(
+      await p.text({
+        message: "Backup storage location:",
+        initialValue: store.versionsPath,
+      }),
+    );
+    if (location !== store.versionsPath) {
+      await setBackupLocation(settingsPath, location === settingsPath ? undefined : location);
+    }
+    await backupNow(settingsPath, location, target);
   }
   if (choice === "yes-always") {
     await setPreference(settingsPath, "alwaysOn");
@@ -50,7 +59,7 @@ export async function maybeBackup(settingsPath: string, target: BackupTarget): P
   }
 }
 
-async function backupNow(settingsPath: string, target: BackupTarget): Promise<void> {
+async function backupNow(settingsPath: string, versionsPath: string, target: BackupTarget): Promise<void> {
   await appendVersion(settingsPath, {
     timestamp: new Date().toISOString(),
     ideId: target.ideId,
@@ -58,5 +67,5 @@ async function backupNow(settingsPath: string, target: BackupTarget): Promise<vo
     path: target.path,
     servers: target.config.servers,
   });
-  p.log.info(`Backed up current MCP servers for ${target.path}`);
+  p.log.success(`Backed up current MCP servers for ${target.path} to ${versionsPath}`);
 }

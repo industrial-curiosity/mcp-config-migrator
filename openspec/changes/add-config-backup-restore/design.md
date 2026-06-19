@@ -42,15 +42,23 @@ A single JSON file, by default `~/mcp-config-migrator.versions.json`:
 `src/cli/flow.ts`'s `runFlow()`, between the existing write-confirmation (`p.confirm`) and the call that writes the merged config, gains a backup-decision step. It operates on the already-loaded pre-merge `targetConfig` (no extra disk read needed) and the already-known `targetAdapter.id`/`target.scopeId`/`target.path`. `saveWithBackup()` and `backupFile()` are deleted; the write site calls `targetAdapter.save()` directly (no longer wrapped).
 
 Decision step behavior, based on `configured`:
-- `"alwaysOn"` → append a version silently, no prompt.
-- `"alwaysOff"` → skip silently, no prompt.
+- `"alwaysOn"` → append a version silently, no prompt — then display the storage location via `p.log.success` (or equivalent), since the user never sees an interactive step to learn it from otherwise.
+- `"alwaysOff"` → skip silently, no prompt, nothing to display.
 - `"alwaysAsk"` (default) → `p.select` with four options in order, "Yes, always" default-highlighted:
-  - "Yes" → append a version now; `configured` stays `"alwaysAsk"` (prompts again next time).
-  - "Yes, always" → append a version now; persist `configured: "alwaysOn"`.
+  - "Yes" → prompt for the storage location (see below), append a version now; `configured` stays `"alwaysAsk"` (prompts again next time).
+  - "Yes, always" → prompt for the storage location, append a version now; persist `configured: "alwaysOn"`.
   - "No" → skip this run; `configured` stays `"alwaysAsk"` (prompts again next time).
   - "No, never" → skip this run; persist `configured: "alwaysOff"`.
 
 Plain "Yes" and plain "No" are deliberately equivalent, in their effect on persisted state, to the file never having recorded a preference at all — they only decide the current run. Only the two "always" options write to `configured`.
+
+### Backup location is editable and always displayed
+
+Storage location was previously only changeable out-of-band via `config backup`, and a successful backup never told the user where it went — both gaps reported after initial use. Fixed by:
+
+- After "Yes"/"Yes, always" is chosen, `maybeBackup` prompts with `p.text` for the storage location, pre-filled with the currently effective `store.versionsPath` as an editable default (the same "suggested default, always editable" convention used for config paths elsewhere in this CLI). If the answer differs from the current effective location, it's persisted via `setBackupLocation` — exactly as if the user had run `config backup` first, so the change sticks for future runs too.
+- After every backup that actually occurs — interactive or the silent `"alwaysOn"` case — `maybeBackup` displays the storage location the entry was written to. The silent path has no other prompt, so this is the only feedback the user gets that a backup happened and where.
+- "No"/"No, never" never reach the location prompt or the display, since no backup occurs.
 
 ### New CLI commands and argument handling
 
