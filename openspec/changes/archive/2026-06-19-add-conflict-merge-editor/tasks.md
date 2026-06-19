@@ -9,7 +9,7 @@
 - [x] 2.1 Add a `merged` category to `MigrationSummary` in `src/engine/summary.ts`
 - [x] 2.2 Update `summarize()` to bucket entries by `.kind`, including the new merge bucket
 - [x] 2.3 Update `src/engine/summary.test.ts` for the new category
-- [ ] 2.4 Update the summary note rendering in `src/cli/flow.ts` to display the merged category
+- [x] 2.4 Update the summary note rendering in `src/cli/flow.ts` to display the merged category
 
 ## 3. Conflict-marker rendering
 
