@@ -18,7 +18,10 @@ vi.mock("@clack/prompts", () => ({
   multiselect: vi.fn(),
 }));
 
+vi.mock("./editor.js", () => ({ editText: vi.fn() }));
+
 import * as p from "@clack/prompts";
+import { editText } from "./editor.js";
 import { runCli } from "./flow.js";
 
 const select = p.select as unknown as Mock;
@@ -28,6 +31,7 @@ const multiselect = p.multiselect as unknown as Mock;
 const note = p.note as unknown as Mock;
 const outro = p.outro as unknown as Mock;
 const cancelFn = p.cancel as unknown as Mock;
+const editTextMock = editText as unknown as Mock;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -124,6 +128,42 @@ describe("runCli", () => {
       expect(note).toHaveBeenCalledWith(expect.stringContaining("Added (1): add1"), "Migration summary");
       expect(note).toHaveBeenCalledWith(expect.stringContaining("accept target (1): keep1"), "Migration summary");
       expect(note).toHaveBeenCalledWith(expect.stringContaining("accept source (1): take1"), "Migration summary");
+    });
+  });
+
+  it("resolves a conflict via the merge editor and writes the hand-merged entry", async () => {
+    await withTmpDir(async (dir) => {
+      const sourcePath = join(dir, "source-mcp.json");
+      const targetPath = join(dir, "target-mcp.json");
+      await writeFile(
+        sourcePath,
+        JSON.stringify({ mcpServers: { merge1: { command: "source-cmd" } } }),
+        "utf8",
+      );
+      await writeFile(
+        targetPath,
+        JSON.stringify({ mcpServers: { merge1: { command: "target-cmd" } } }),
+        "utf8",
+      );
+
+      select
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("global")
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("merge"); // resolution choice for merge1
+      text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
+      editTextMock.mockResolvedValueOnce('{\n  "transport": "stdio",\n  "command": "hand-merged"\n}\n');
+      confirm.mockResolvedValueOnce(true);
+      multiselect.mockResolvedValueOnce([]);
+
+      await runCli({ cwd: dir, env: {}, platform: "linux" });
+
+      const written = await readJson(targetPath);
+      expect(written.mcpServers).toEqual({ merge1: { command: "hand-merged" } });
+      expect(note).toHaveBeenCalledWith(expect.stringContaining("merged (1): merge1"), "Migration summary");
+      // Merged entries count as changed for the Claude Code re-approval notice path.
+      expect(editTextMock).toHaveBeenCalledTimes(1);
     });
   });
 

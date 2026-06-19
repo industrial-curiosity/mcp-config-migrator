@@ -1,42 +1,42 @@
 ## 1. Resolution type and merge application
 
-- [ ] 1.1 Change `ConflictResolution` in `src/engine/merge.ts` from a string union to a discriminated union: `{ kind: "accept-target" } | { kind: "accept-source" } | { kind: "merge"; merged: NormalizedMcpServer }`
-- [ ] 1.2 Update `applyMerge()` to switch on `.kind`, using `merged` directly for the `"merge"` case
-- [ ] 1.3 Update `src/engine/merge.test.ts` for the new resolution shape
+- [x] 1.1 Change `ConflictResolution` in `src/engine/merge.ts` from a string union to a discriminated union: `{ kind: "accept-target" } | { kind: "accept-source" } | { kind: "merge"; merged: NormalizedMcpServer }`
+- [x] 1.2 Update `applyMerge()` to switch on `.kind`, using `merged` directly for the `"merge"` case
+- [x] 1.3 Update `src/engine/merge.test.ts` for the new resolution shape
 
 ## 2. Summary reporting
 
-- [ ] 2.1 Add a `merged` category to `MigrationSummary` in `src/engine/summary.ts`
-- [ ] 2.2 Update `summarize()` to bucket entries by `.kind`, including the new merge bucket
-- [ ] 2.3 Update `src/engine/summary.test.ts` for the new category
+- [x] 2.1 Add a `merged` category to `MigrationSummary` in `src/engine/summary.ts`
+- [x] 2.2 Update `summarize()` to bucket entries by `.kind`, including the new merge bucket
+- [x] 2.3 Update `src/engine/summary.test.ts` for the new category
 - [ ] 2.4 Update the summary note rendering in `src/cli/flow.ts` to display the merged category
 
 ## 3. Conflict-marker rendering
 
-- [ ] 3.1 Add a function to `src/engine/diff.ts` that walks `diffLines(targetJson, sourceJson)` hunks and emits merged text: unchanged hunks pass through plain, changed/added/removed hunks wrapped in `<<<<<<< target` / `=======` / `>>>>>>> source` markers
-- [ ] 3.2 Reuse the existing `forDisplay()` field filtering (excludes `name` and `extra`) for the text fed into this function
-- [ ] 3.3 Add tests covering: all-identical input (no markers), a single differing field (one marker block), a field present only on one side (empty section on the other side of the markers)
+- [x] 3.1 Add `renderMergeScaffold()` to `src/engine/diff.ts` that walks `diffLines(targetJson, sourceJson)` hunks and emits merged text: unchanged hunks pass through plain, changed/added/removed hunks wrapped in `<<<<<<< target` / `=======` / `>>>>>>> source` markers
+- [x] 3.2 Reuse the existing `forDisplay()` field filtering (excludes `name` and `extra`) for the text fed into this function
+- [x] 3.3 Add tests covering: a single differing field surrounded by unmarked identical lines, and a field present only on one side (empty section on the other side of the markers). A wholly-identical-yet-conflict case isn't reachable given current equality semantics (identical common fields always classify as "unchanged", which `renderMergeScaffold` rejects), so that case is covered by the "non-conflict entry throws" test instead.
 
 ## 4. Editor spawning
 
-- [ ] 4.1 Add a module (e.g. `src/cli/editor.ts`) that writes given text to a temp file (`node:os.tmpdir()` + `node:fs`), resolves the editor command via `$VISUAL` → `$EDITOR` → platform default (`vi` on POSIX, `notepad` on Windows), spawns it synchronously with inherited stdio, reads the file back, and cleans up the temp file
-- [ ] 4.2 Add tests for editor resolution order (mocking `env`/`platform`), skipping or mocking the actual subprocess spawn
+- [x] 4.1 Add `src/cli/editor.ts` that writes given text to a temp file (`node:os.tmpdir()` + `node:fs`), resolves the editor command via `$VISUAL` → `$EDITOR` → platform default (`vi` on POSIX, `notepad` on Windows), spawns it via shell (so multi-word `$EDITOR` values like `"code --wait"` work) with inherited stdio, reads the file back, and cleans up the temp file
+- [x] 4.2 Add tests for editor resolution order (mocking `env`/`platform`) and for `editText()` with `node:child_process` mocked, covering success, launch failure, and non-zero exit status
 
 ## 5. Validation and fix/redo loop
 
-- [ ] 5.1 Add a check for leftover `<<<<<<<` / `=======` / `>>>>>>>` markers in the edited text, producing a specific error message when found
-- [ ] 5.2 Otherwise parse the edited text as JSON and run it through `entryToNormalized()` (or equivalent), producing a validation error on parse/shape failure
-- [ ] 5.3 On either failure, prompt the user (via `@clack/prompts`) to choose "Fix" (reopen editor with their edited text) or "Redo" (reopen editor with the original conflict-marker scaffold), looping until valid or cancelled
-- [ ] 5.4 Add tests for: valid input accepted, marker-left-in-place rejected with correct message, invalid JSON rejected, fix path preserves edits, redo path resets to original scaffold
+- [x] 5.1 Add `hasUnresolvedMarkers()`/`parseMergedServer()` to `src/engine/mergeParse.ts`: checks for leftover `<<<<<<<` / `=======` / `>>>>>>>` markers first, producing a specific error message when found
+- [x] 5.2 `parseMergedServer()` otherwise parses the edited text as JSON and validates it directly against the normalized server shape (`transport` + transport-appropriate fields), rejecting unrecognized fields rather than reusing `entryToNormalized()` — the editor shows `NormalizedMcpServer`'s own field names (e.g. `"transport"`), not the raw per-adapter IDE schema (`"type"`) that `entryToNormalized()` expects, so reusing it as-is would silently misparse the transport field
+- [x] 5.3 Added `src/cli/mergeFlow.ts`'s `resolveMergeConflict()`: on either failure, prompts the user (via `@clack/prompts`) to choose "Fix" (reopen editor with their edited text) or "Redo" (reopen editor with the original conflict-marker scaffold), looping until valid or cancelled (via the shared `CliCancelled`/`unwrap` in `src/cli/cancel.ts`)
+- [x] 5.4 Added tests in `mergeParse.test.ts` (parsing/validation cases) and `mergeFlow.test.ts` (valid-first-try, marker rejection + Fix, invalid JSON + Redo, cancellation)
 
 ## 6. CLI wiring
 
-- [ ] 6.1 Add the third "Merge…" option to the `p.select` in `resolveConflicts()` in `src/cli/flow.ts`
-- [ ] 6.2 Wire the merge option through conflict-marker rendering → editor spawn → validation loop → store as `{ kind: "merge", merged }` in `resolutions`
-- [ ] 6.3 Update `changedServerNames()` in `src/cli/flow.ts` to treat merged entries as changed (for the Claude Code re-approval notice)
-- [ ] 6.4 Update `src/cli/flow.test.ts` to cover choosing "Merge…" end to end (with editor spawn mocked/injected)
+- [x] 6.1 Add the third "Merge…" option to the `p.select` in `resolveConflicts()` in `src/cli/flow.ts`
+- [x] 6.2 Wire the merge option through conflict-marker rendering → editor spawn → validation loop → store as `{ kind: "merge", merged }` in `resolutions`; `resolveConflicts()` now takes `env`/`platform` so they can reach the editor spawn
+- [x] 6.3 Update `changedServerNames()` in `src/cli/flow.ts` to treat merged entries as changed (for the Claude Code re-approval notice)
+- [x] 6.4 Updated `src/cli/flow.test.ts` to cover choosing "Merge…" end to end, with `./editor.js`'s `editText` mocked
 
 ## 7. Spec and docs sync
 
-- [ ] 7.1 Confirm `openspec/specs/config-migration-engine/spec.md` reflects the merged delta correctly once this change is archived (no action needed now beyond what's in `specs/` — verify at archive time)
-- [ ] 7.2 Update README.md and docs/spec.md to reflect any user-facing or architectural changes introduced by this change
+- [x] 7.1 Confirmed `specs/config-migration-engine/spec.md` in this change directory correctly deltas the live spec (MODIFIED "Conflict resolution choice"/"Migration summary", ADDED "Conflict merge editor"/"Merge editor validation and recovery") — will land in `openspec/specs/` at archive time
+- [x] 7.2 Updated README.md (usage step 3, example summary output) and docs/spec.md (engine/CLI layer descriptions, non-goals list — removed the now-obsolete "no field-level conflict merge" entry and fixed its stale path reference to the archived design doc)

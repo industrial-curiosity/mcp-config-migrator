@@ -13,6 +13,7 @@ export interface MigrationSummary {
     total: number;
     acceptTarget: CategorySummary;
     acceptSource: CategorySummary;
+    merged: CategorySummary;
   };
 }
 
@@ -28,6 +29,7 @@ export function summarize(
   const unchanged: string[] = [];
   const acceptTarget: string[] = [];
   const acceptSource: string[] = [];
+  const merged: string[] = [];
 
   for (const entry of classifications) {
     if (entry.kind === "add") {
@@ -35,9 +37,10 @@ export function summarize(
     } else if (entry.kind === "unchanged") {
       unchanged.push(entry.name);
     } else {
-      const resolution = resolutions[entry.name] ?? "accept-target";
-      if (resolution === "accept-target") acceptTarget.push(entry.name);
-      else acceptSource.push(entry.name);
+      const resolution = resolutions[entry.name] ?? { kind: "accept-target" };
+      if (resolution.kind === "accept-target") acceptTarget.push(entry.name);
+      else if (resolution.kind === "accept-source") acceptSource.push(entry.name);
+      else merged.push(entry.name);
     }
   }
 
@@ -45,9 +48,10 @@ export function summarize(
     added: toCategory(added),
     unchanged: toCategory(unchanged),
     conflicts: {
-      total: acceptTarget.length + acceptSource.length,
+      total: acceptTarget.length + acceptSource.length + merged.length,
       acceptTarget: toCategory(acceptTarget),
       acceptSource: toCategory(acceptSource),
+      merged: toCategory(merged),
     },
   };
 }

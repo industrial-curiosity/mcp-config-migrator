@@ -14,7 +14,7 @@ You'll be asked to:
 
 1. Pick a **source** IDE and config scope/path (a sensible default is suggested and pre-filled, but always editable).
 2. Pick a **target** IDE and config scope/path the same way.
-3. Review any entries that exist in both configs with different definitions, and choose for each one: accept the source's version or accept the target's version.
+3. Review any entries that exist in both configs with different definitions, and choose for each one: accept the source's version, accept the target's version, or merge — which opens an editor with both versions combined and conflicting fields marked git-style (`<<<<<<<`/`=======`/`>>>>>>>`) so you can resolve them by hand.
 4. Confirm a summary (added / unchanged / conflicts resolved) before anything is written.
 5. After writing, optionally remove any server entries from the target as a cleanup step.
 
@@ -61,6 +61,7 @@ Writes to `~/.claude.json` only touch the `mcpServers` key; OAuth session data, 
 │  Conflicts resolved (0):
 │    accept target (0)
 │    accept source (0)
+│    merged (0)
 ◆  Write merged config to ./.mcp.json?
 │  Yes
 ✔  Wrote merged config to ./.mcp.json

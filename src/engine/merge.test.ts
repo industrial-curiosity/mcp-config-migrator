@@ -20,9 +20,9 @@ describe("applyMerge", () => {
   });
 
   it.each([
-    ["accept-target", "target-version"],
-    ["accept-source", "source-version"],
-  ] as const)("resolves a conflict with %s to %s", (resolution, expectedCommand) => {
+    [{ kind: "accept-target" } as const, "target-version"],
+    [{ kind: "accept-source" } as const, "source-version"],
+  ])("resolves a conflict with %o to %s", (resolution, expectedCommand) => {
     const source: NormalizedConfig = {
       servers: [{ name: "foo", transport: "stdio", command: "source-version" }],
     };
@@ -33,5 +33,21 @@ describe("applyMerge", () => {
     const merged = applyMerge(target, classifications, { foo: resolution });
 
     expect(merged.servers.find((s) => s.name === "foo")?.command).toBe(expectedCommand);
+  });
+
+  it("resolves a conflict with merge by using the merged entry directly", () => {
+    const source: NormalizedConfig = {
+      servers: [{ name: "foo", transport: "stdio", command: "source-version", args: ["a"] }],
+    };
+    const target: NormalizedConfig = {
+      servers: [{ name: "foo", transport: "stdio", command: "target-version", cwd: "/tmp" }],
+    };
+    const classifications = classify(source, target);
+    const mergedEntry = { name: "foo", transport: "stdio" as const, command: "hand-merged", args: ["a"] };
+    const merged = applyMerge(target, classifications, {
+      foo: { kind: "merge", merged: mergedEntry },
+    });
+
+    expect(merged.servers.find((s) => s.name === "foo")).toEqual(mergedEntry);
   });
 });

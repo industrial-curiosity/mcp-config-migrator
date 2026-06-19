@@ -3,24 +3,17 @@ import { adapters, getAdapter } from "../adapters/registry.js";
 import type { DefaultPathCandidate } from "../adapters/types.js";
 import { classify, type ClassifiedEntry } from "../engine/classify.js";
 import { renderConflictDiff } from "../engine/diff.js";
-import { applyMerge, type ConflictResolution, type ConflictResolutions } from "../engine/merge.js";
+import { applyMerge, type ConflictResolutions } from "../engine/merge.js";
 import { isNoOp, summarize } from "../engine/summary.js";
 import { saveWithBackup } from "../engine/write.js";
 import type { NormalizedConfig } from "../model/types.js";
+import { CliCancelled, unwrap } from "./cancel.js";
+import { resolveMergeConflict } from "./mergeFlow.js";
 
 export interface RunCliOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
-}
-
-class CliCancelled extends Error {}
-
-function unwrap<T>(value: T | symbol): T {
-  if (p.isCancel(value)) {
-    throw new CliCancelled();
-  }
-  return value;
 }
 
 async function selectIde(message: string): Promise<string> {
@@ -52,18 +45,29 @@ async function selectScopeAndPath(
   return { scopeId: candidate.scopeId, path: unwrap(path) };
 }
 
-async function resolveConflicts(conflicts: ClassifiedEntry[]): Promise<ConflictResolutions> {
+async function resolveConflicts(
+  conflicts: ClassifiedEntry[],
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+): Promise<ConflictResolutions> {
   const resolutions: ConflictResolutions = {};
   for (const entry of conflicts) {
     p.note(renderConflictDiff(entry), `Conflict: ${entry.name}`);
-    const resolution = await p.select<ConflictResolution>({
+    const choice = await p.select<"accept-target" | "accept-source" | "merge">({
       message: `Resolve "${entry.name}":`,
       options: [
         { value: "accept-target", label: "Accept target's definition" },
         { value: "accept-source", label: "Accept source's definition" },
+        { value: "merge", label: "Merge…" },
       ],
     });
-    resolutions[entry.name] = unwrap(resolution);
+    const resolved = unwrap(choice);
+    if (resolved === "merge") {
+      const merged = await resolveMergeConflict(entry, env, platform);
+      resolutions[entry.name] = { kind: "merge", merged };
+    } else {
+      resolutions[entry.name] = { kind: resolved };
+    }
   }
   return resolutions;
 }
@@ -72,7 +76,9 @@ function changedServerNames(classifications: ClassifiedEntry[], resolutions: Con
   return classifications
     .filter(
       (entry) =>
-        entry.kind === "add" || (entry.kind === "conflict" && resolutions[entry.name] === "accept-source"),
+        entry.kind === "add" ||
+        (entry.kind === "conflict" &&
+          (resolutions[entry.name]?.kind === "accept-source" || resolutions[entry.name]?.kind === "merge")),
     )
     .map((entry) => entry.name);
 }
@@ -109,7 +115,7 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   }
 
   const conflicts = classifications.filter((entry) => entry.kind === "conflict");
-  const resolutions = await resolveConflicts(conflicts);
+  const resolutions = await resolveConflicts(conflicts, env, platform);
 
   const summary = summarize(classifications, resolutions);
   const formatCategory = (label: string, category: { count: number; names: string[] }): string =>
@@ -121,6 +127,7 @@ async function runFlow(options: RunCliOptions): Promise<void> {
       `Conflicts resolved (${summary.conflicts.total}):`,
       `  ${formatCategory("accept target", summary.conflicts.acceptTarget)}`,
       `  ${formatCategory("accept source", summary.conflicts.acceptSource)}`,
+      `  ${formatCategory("merged", summary.conflicts.merged)}`,
     ].join("\n"),
     "Migration summary",
   );
