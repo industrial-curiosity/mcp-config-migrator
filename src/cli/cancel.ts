@@ -8,3 +8,16 @@ export function unwrap<T>(value: T | symbol): T {
   }
   return value;
 }
+
+/** Runs `fn`, turning a `CliCancelled` thrown anywhere inside it into a clean "Cancelled." message. */
+export async function withCancelHandling(fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+  } catch (err) {
+    if (err instanceof CliCancelled) {
+      p.cancel("Cancelled.");
+      return;
+    }
+    throw err;
+  }
+}

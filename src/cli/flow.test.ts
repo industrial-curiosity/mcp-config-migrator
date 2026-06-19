@@ -2,6 +2,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { withTmpDir } from "../test/tmp.js";
+import { setPreference } from "../model/versionsStore.js";
 
 const { CANCEL } = vi.hoisted(() => ({ CANCEL: Symbol("cancel") }));
 
@@ -41,6 +42,13 @@ async function readJson(path: string): Promise<Record<string, unknown>> {
   return JSON.parse(await readFile(path, "utf8"));
 }
 
+/** Settings file pre-set to skip the backup decision prompt, for tests not focused on backup behavior. */
+async function settingsPathWithBackupOff(dir: string): Promise<string> {
+  const settingsPath = join(dir, "settings.json");
+  await setPreference(settingsPath, "alwaysOff");
+  return settingsPath;
+}
+
 describe("runCli", () => {
   it("migrates additions from Cursor to a non-existent VS Code target", async () => {
     await withTmpDir(async (dir) => {
@@ -61,19 +69,17 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       const written = await readJson(targetPath);
       expect(written.servers).toEqual({
         alpha: { type: "stdio", command: "node", args: ["alpha.js"] },
       });
-      // Target didn't exist before, so nothing should have been backed up.
-      expect((await readdir(dir)).some((f) => f.includes(".bak."))).toBe(false);
       expect(note).not.toHaveBeenCalledWith(expect.stringContaining("reset-project-choices"), expect.anything());
     });
   });
 
-  it("resolves each conflict per the user's choice and backs up the existing target", async () => {
+  it("resolves each conflict per the user's choice", async () => {
     await withTmpDir(async (dir) => {
       const sourcePath = join(dir, "source-mcp.json");
       const targetPath = join(dir, "target-mcp.json");
@@ -114,7 +120,7 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       const written = await readJson(targetPath);
       expect(written.mcpServers).toEqual({
@@ -124,7 +130,6 @@ describe("runCli", () => {
         take1: { command: "source-take" },
         onlyInTarget: { command: "target-only" },
       });
-      expect((await readdir(dir)).some((f) => f.includes(".bak."))).toBe(true);
       expect(note).toHaveBeenCalledWith(expect.stringContaining("Added (1): add1"), "Migration summary");
       expect(note).toHaveBeenCalledWith(expect.stringContaining("accept target (1): keep1"), "Migration summary");
       expect(note).toHaveBeenCalledWith(expect.stringContaining("accept source (1): take1"), "Migration summary");
@@ -157,7 +162,7 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       const written = await readJson(targetPath);
       expect(written.mcpServers).toEqual({ merge1: { command: "hand-merged" } });
@@ -221,7 +226,7 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce(["beta"]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       const written = await readJson(targetPath);
       expect(written.mcpServers).toEqual({ alpha: { command: "node" } });
@@ -247,7 +252,7 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       expect(note).toHaveBeenCalledWith(expect.stringContaining("reset-project-choices"), expect.anything());
       expect(note).toHaveBeenCalledWith(expect.stringContaining("alpha"), expect.anything());
@@ -273,7 +278,7 @@ describe("runCli", () => {
       confirm.mockResolvedValueOnce(true);
       multiselect.mockResolvedValueOnce([]);
 
-      await runCli({ cwd: dir, env: {}, platform: "linux" });
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       expect(note).not.toHaveBeenCalledWith(expect.stringContaining("reset-project-choices"), expect.anything());
     });
