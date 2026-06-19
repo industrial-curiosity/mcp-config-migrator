@@ -7,7 +7,7 @@ export { adapters, getAdapter } from "./adapters/registry.js";
 
 export type { ClassificationKind, ClassifiedEntry } from "./engine/classify.js";
 export { classify } from "./engine/classify.js";
-export { renderConflictDiff } from "./engine/diff.js";
+export { renderConflictDiff, renderMergeScaffold } from "./engine/diff.js";
 export type { ConflictResolution, ConflictResolutions } from "./engine/merge.js";
 export { applyMerge } from "./engine/merge.js";
 export type { MigrationSummary } from "./engine/summary.js";

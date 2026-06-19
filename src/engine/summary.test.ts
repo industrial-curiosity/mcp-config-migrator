@@ -22,8 +22,8 @@ describe("summarize", () => {
     };
     const classifications = classify(source, target);
     const summary = summarize(classifications, {
-      kept: "accept-target",
-      taken: "accept-source",
+      kept: { kind: "accept-target" },
+      taken: { kind: "accept-source" },
     });
 
     expect(summary).toEqual({
@@ -33,7 +33,28 @@ describe("summarize", () => {
         total: 2,
         acceptTarget: { count: 1, names: ["kept"] },
         acceptSource: { count: 1, names: ["taken"] },
+        merged: { count: 0, names: [] },
       },
+    });
+  });
+
+  it("counts a merge resolution under the merged category", () => {
+    const source: NormalizedConfig = {
+      servers: [{ name: "combined", transport: "stdio", command: "source" }],
+    };
+    const target: NormalizedConfig = {
+      servers: [{ name: "combined", transport: "stdio", command: "target" }],
+    };
+    const classifications = classify(source, target);
+    const summary = summarize(classifications, {
+      combined: { kind: "merge", merged: { name: "combined", transport: "stdio", command: "hand-merged" } },
+    });
+
+    expect(summary.conflicts).toEqual({
+      total: 1,
+      acceptTarget: { count: 0, names: [] },
+      acceptSource: { count: 0, names: [] },
+      merged: { count: 1, names: ["combined"] },
     });
   });
 });

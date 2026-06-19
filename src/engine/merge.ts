@@ -1,7 +1,10 @@
-import type { NormalizedConfig } from "../model/types.js";
+import type { NormalizedConfig, NormalizedMcpServer } from "../model/types.js";
 import type { ClassifiedEntry } from "./classify.js";
 
-export type ConflictResolution = "accept-target" | "accept-source";
+export type ConflictResolution =
+  | { kind: "accept-target" }
+  | { kind: "accept-source" }
+  | { kind: "merge"; merged: NormalizedMcpServer };
 
 export type ConflictResolutions = Record<string, ConflictResolution>;
 
@@ -21,9 +24,11 @@ export function applyMerge(
     if (entry.kind === "add") {
       resultByName.set(entry.name, entry.source);
     } else if (entry.kind === "conflict") {
-      const resolution = resolutions[entry.name] ?? "accept-target";
-      if (resolution === "accept-source") {
+      const resolution = resolutions[entry.name] ?? { kind: "accept-target" };
+      if (resolution.kind === "accept-source") {
         resultByName.set(entry.name, entry.source);
+      } else if (resolution.kind === "merge") {
+        resultByName.set(entry.name, resolution.merged);
       }
       // accept-target: target's existing value is already in the map.
     }
