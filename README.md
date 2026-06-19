@@ -18,7 +18,7 @@ You'll be asked to:
 4. Confirm a summary (added / unchanged / conflicts resolved) before anything is written.
 5. After writing, optionally remove any server entries from the target as a cleanup step.
 
-Nothing is written to disk until you explicitly confirm, and the existing target file (if any) is backed up alongside itself before being overwritten. You can cancel at any prompt (Ctrl+C) with no changes made.
+Nothing is written to disk until you explicitly confirm. Right before the write, you'll be asked whether to back up the target's *current* MCP server entries (not the rest of the file) to a version history — answer "Yes, always" or "No, never" to stop being asked and remember that choice for future runs, or "Yes"/"No" to decide just this once. You can cancel at any prompt (Ctrl+C) with no changes made and no backup recorded.
 
 If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Code will ask you to re-approve the affected servers next time you open that project — the CLI tells you which servers and reminds you of `claude mcp reset-project-choices` if you'd rather not be prompted again.
 
@@ -38,6 +38,19 @@ Every suggested path is shown as editable text — auto-detection is a convenien
 VS Code requires a `type` (`stdio`/`http`/`sse`) on every entry; Cursor and Claude Code make `type` optional for `stdio` entries. Fields specific to one IDE (e.g. VS Code's `sandbox` options) are preserved when round-tripping through that same IDE, but dropped — with a warning — when migrating to a different IDE, since there's no equivalent field to write them into.
 
 Writes to `~/.claude.json` only touch the `mcpServers` key; OAuth session data, trust state, and any other content in that file is left untouched.
+
+## Backup and restore
+
+Backups (if you opt in) are appended to a single version history file, by default `~/mcp-config-migrator.versions.json`, holding every backed-up version across every target you've ever migrated to — nothing is ever removed or overwritten by normal use.
+
+```sh
+npx mcp-config-migrator restore                  # prompts for the version history file, defaulting to the canonical one
+npx mcp-config-migrator restore --file <path>    # or -f <path>
+npx mcp-config-migrator config backup            # view or change the backup preference and storage location
+npx mcp-config-migrator --help                   # or -h, /?
+```
+
+`restore` lists every saved version newest-first, lets you preview a version's server entries before committing, and on confirmation writes that version directly back to its original IDE/scope/path — restoring an older version doesn't remove any other version, so you can always restore forward again later.
 
 ## Example run
 
@@ -64,6 +77,8 @@ Writes to `~/.claude.json` only touch the `mcpServers` key; OAuth session data, 
 │    merged (0)
 ◆  Write merged config to ./.mcp.json?
 │  Yes
+◆  Back up the current MCP servers in ./.mcp.json before writing?
+│  ● Yes, always
 ✔  Wrote merged config to ./.mcp.json
 ◆  Remove any MCP servers from the target before finishing? (none required)
 │  (none selected)

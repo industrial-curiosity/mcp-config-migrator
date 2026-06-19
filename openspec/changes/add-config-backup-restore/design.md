@@ -71,7 +71,7 @@ Reads the active versions store (resolved through `backupLocation` if set), list
 
 ### `config backup` flow
 
-Shows the current `configured` value and effective storage location, offers a `p.select` to change `configured`, and a `p.text` (default = current location) to change `backupLocation` — entering the canonical default path clears `backupLocation` rather than storing it redundantly.
+Shows the current `configured` value and effective storage location, offers a `p.select` to change `configured`, and a `p.text` (default = current location) to change `backupLocation` — entering the settings file's own path clears `backupLocation` rather than storing it redundantly.
 
 ## Risks / Trade-offs
 

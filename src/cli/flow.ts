@@ -5,15 +5,17 @@ import { classify, type ClassifiedEntry } from "../engine/classify.js";
 import { renderConflictDiff } from "../engine/diff.js";
 import { applyMerge, type ConflictResolutions } from "../engine/merge.js";
 import { isNoOp, summarize } from "../engine/summary.js";
-import { saveWithBackup } from "../engine/write.js";
+import { defaultSettingsPath } from "../model/versionsStore.js";
 import type { NormalizedConfig } from "../model/types.js";
-import { CliCancelled, unwrap } from "./cancel.js";
+import { maybeBackup } from "./backupFlow.js";
+import { unwrap, withCancelHandling } from "./cancel.js";
 import { resolveMergeConflict } from "./mergeFlow.js";
 
 export interface RunCliOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
+  settingsPath?: string;
 }
 
 async function selectIde(message: string): Promise<string> {
@@ -87,6 +89,7 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   const cwd = options.cwd ?? process.cwd();
   const env = options.env ?? process.env;
   const platform = options.platform ?? process.platform;
+  const settingsPath = options.settingsPath ?? defaultSettingsPath();
 
   p.intro("mcp-config-migrator");
 
@@ -154,12 +157,16 @@ async function runFlow(options: RunCliOptions): Promise<void> {
     }
   }
 
-  const saveResult = await saveWithBackup(targetAdapter, target.path, merged);
+  await maybeBackup(settingsPath, {
+    ideId: targetAdapter.id,
+    scopeId: target.scopeId,
+    path: target.path,
+    config: targetConfig,
+  });
+
+  const saveResult = await targetAdapter.save(target.path, merged);
   for (const dropped of saveResult.droppedFields) {
     p.log.warn(`Dropped fields for "${dropped.serverName}" not supported by ${targetAdapter.label}: ${dropped.fields.join(", ")}`);
-  }
-  if (saveResult.backupPath) {
-    p.log.info(`Backed up previous config to ${saveResult.backupPath}`);
   }
   p.log.success(`Wrote merged config to ${target.path}`);
 
@@ -196,13 +203,5 @@ async function runCleanup(
 }
 
 export async function runCli(options: RunCliOptions = {}): Promise<void> {
-  try {
-    await runFlow(options);
-  } catch (err) {
-    if (err instanceof CliCancelled) {
-      p.cancel("Migration cancelled.");
-      return;
-    }
-    throw err;
-  }
+  await withCancelHandling(() => runFlow(options));
 }
