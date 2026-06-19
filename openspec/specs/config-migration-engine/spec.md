@@ -99,15 +99,6 @@ The system SHALL produce a merged configuration containing: every Add entry from
 - **WHEN** the target configuration contains a server not present in the source configuration
 - **THEN** that server remains in the merged configuration after migration
 
-### Requirement: Pre-write backup
-
-Before overwriting an existing target config file, the system SHALL save a backup copy of that file's current contents.
-
-#### Scenario: Backup created before write
-
-- **WHEN** the system is about to write a merged configuration to a target file that already exists
-- **THEN** a backup of the pre-migration file contents is saved before the write occurs
-
 ### Requirement: Migration summary
 
 After applying a merge, the system SHALL report, for each of added, unchanged, and conflicting entries, both the count and the server names in that category, with conflicts further broken down by the resolution choice made for each, including how many were resolved by merging.
