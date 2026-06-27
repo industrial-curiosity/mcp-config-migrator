@@ -9,30 +9,45 @@ The system SHALL support exactly VS Code, Cursor, Claude Code, and Pi as selecta
 - **WHEN** the user is prompted to choose a source IDE and, separately, a target IDE
 - **THEN** the only options offered are VS Code, Cursor, Claude Code, and Pi
 
-## ADDED Requirements
-
 ### Requirement: Pi config scope selection
 
-Pi supports a global MCP config scope and a project-local scope. The system SHALL ask the user which scope to use before suggesting a path when Pi is selected.
+Pi supports four MCP config scopes with defined precedence (later entries override earlier ones): global shared, Pi global override, project shared, and Pi project override. The system SHALL offer all four scopes when Pi is selected, and SHALL display a hint alongside each option describing its precedence and sharing behavior.
 
-#### Scenario: Pi global scope choice
+#### Scenario: Pi scope options presented
 
 - **WHEN** the user selects Pi as the source or target IDE
-- **THEN** the system asks whether to use the global config (`~/.pi/agent/mcp.json`) or the project-local config (`.pi/mcp.json`)
+- **THEN** the system presents exactly four scope options: Global shared, Pi global override, Project shared, and Pi project override — each with a hint describing its purpose
+
+#### Scenario: Hints describe scope purpose
+
+- **WHEN** the scope selection prompt is shown for Pi
+- **THEN** each option's hint includes its resolved path and a brief description (e.g. "shared across all MCP tools" or "Pi-specific; overrides global shared")
 
 ### Requirement: Pi default path suggestion
 
 For the selected Pi scope, the system SHALL compute the platform-appropriate default config file path and present it as an editable suggestion.
 
-#### Scenario: Pi global default path
+#### Scenario: Pi global shared default path
 
-- **WHEN** the user selects Pi and the global scope
+- **WHEN** the user selects Pi and the "Global shared" scope
+- **THEN** the suggested default path is `~/.config/mcp/mcp.json`, shown in an editable prompt
+
+#### Scenario: Pi global override default path
+
+- **WHEN** the user selects Pi and the "Pi global override" scope
 - **THEN** the suggested default path is `~/.pi/agent/mcp.json`, shown in an editable prompt
 
-#### Scenario: Pi project-local default path
+#### Scenario: Pi project shared default path
 
-- **WHEN** the user selects Pi and the project-local scope
+- **WHEN** the user selects Pi and the "Project shared" scope
+- **THEN** the suggested default path is `.mcp.json` relative to the current working directory, shown in an editable prompt
+
+#### Scenario: Pi project override default path
+
+- **WHEN** the user selects Pi and the "Pi project override" scope
 - **THEN** the suggested default path is `.pi/mcp.json` relative to the current working directory, shown in an editable prompt
+
+## ADDED Requirements
 
 ### Requirement: Pi target prerequisite notice
 
@@ -48,9 +63,23 @@ Because Pi has no built-in MCP support, the system SHALL display a one-time info
 - **WHEN** the user selects Pi as the **source** IDE only (not target)
 - **THEN** no prerequisite notice is displayed
 
+### Requirement: Scope selection hints
+
+The `DefaultPathCandidate` type SHALL support an optional `hint` field. When a hint is present, the scope selection prompt SHALL display the resolved path followed by the hint text. When no hint is provided, the resolved path alone is shown.
+
+#### Scenario: Hint displayed alongside path
+
+- **WHEN** a `DefaultPathCandidate` has a non-empty `hint` field
+- **THEN** the scope selection prompt shows the path and the hint together (e.g. `~/.config/mcp/mcp.json · shared across all MCP tools`)
+
+#### Scenario: Path-only display when no hint
+
+- **WHEN** a `DefaultPathCandidate` has no `hint` field
+- **THEN** the scope selection prompt shows only the resolved path, matching the existing behavior of all non-Pi adapters
+
 ### Requirement: Pi normalized config parsing
 
-The system SHALL parse Pi's `~/.pi/agent/mcp.json` or `.pi/mcp.json` file using the `mcpServers` key, following the same normalized representation used for Cursor and Claude Code entries.
+The system SHALL parse any of the four Pi MCP config files using the `mcpServers` key, following the same normalized representation used for Cursor and Claude Code entries.
 
 #### Scenario: Parsing a Pi stdio entry
 

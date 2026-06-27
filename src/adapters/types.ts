@@ -6,6 +6,8 @@ export interface DefaultPathCandidate {
   /** Human-readable label shown in CLI prompts, e.g. "User", "Project (.mcp.json)". */
   label: string;
   path: string;
+  /** Optional secondary description shown alongside the path in the scope selection prompt. */
+  hint?: string;
 }
 
 export interface DroppedExtraFields {

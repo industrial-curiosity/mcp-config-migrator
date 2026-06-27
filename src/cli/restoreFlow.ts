@@ -50,6 +50,14 @@ async function restoreFlow(options: RunRestoreOptions): Promise<void> {
   }
 
   const adapter = getAdapter(version.ideId);
+
+  if (adapter.id === "pi") {
+    p.note(
+      "Pi has no built-in MCP support. Install pi-mcp-adapter first:\n\n  pi install npm:pi-mcp-adapter\n\nRestart Pi after installation.",
+      "Prerequisites for Pi",
+    );
+  }
+
   await adapter.save(version.path, { servers: version.servers });
   p.log.success(`Restored ${version.path} from ${version.timestamp}.`);
   p.outro("Done.");
