@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- Pi IDE adapter: migrate MCP server configs to and from Pi using any of its four config scopes — global shared (`~/.config/mcp/mcp.json`), Pi global override (`~/.pi/agent/mcp.json`), project shared (`.mcp.json`), and Pi project override (`.pi/mcp.json`). Config files are loaded in precedence order; later entries override earlier ones.
+- Scope selection hints: each Pi scope option displays its resolved path and a brief description of its precedence and sharing behavior (e.g. "shared across all MCP tools" or "Pi-specific; overrides global shared"). The `DefaultPathCandidate` interface gains an optional `hint` field that any adapter can use; non-Pi adapters are unaffected.
+- Prerequisite notice when Pi is selected as a migration or restore target: because Pi has no built-in MCP support, the CLI displays a notice to install `pi-mcp-adapter` (`pi install npm:pi-mcp-adapter`) before proceeding with the write.
+
 ## [0.1.0] - 2026-06-18
 
 ### Added
