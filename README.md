@@ -1,6 +1,6 @@
 # mcp-config-migrator
 
-Interactively migrate and merge MCP (Model Context Protocol) server configurations between VS Code, Cursor, and Claude Code.
+Interactively migrate and merge MCP (Model Context Protocol) server configurations between VS Code, Cursor, Claude Code, and Pi.
 
 If you configure MCP servers in one editor and want the same servers available in another — or want to keep two editors' configs in sync — this CLI walks you through picking a source and target, shows you what would change, lets you resolve any conflicts, and writes the result back in the target's native format.
 
@@ -32,6 +32,14 @@ If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Cod
 | Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Claude Code | User | `mcpServers` (inside `~/.claude.json`) | `$CLAUDE_CONFIG_DIR/.claude.json` if set, else `~/.claude.json` |
 | Claude Code | Project | `mcpServers` (inside `.mcp.json`) | `<project>/.mcp.json` |
+| Pi | Global shared | `mcpServers` | `~/.config/mcp/mcp.json` |
+| Pi | Pi global override | `mcpServers` | `~/.pi/agent/mcp.json` |
+| Pi | Project shared | `mcpServers` | `<project>/.mcp.json` |
+| Pi | Pi project override | `mcpServers` | `<project>/.pi/mcp.json` |
+
+Pi config files are loaded in the order listed; later entries override earlier ones. When selecting a Pi scope, each option shows a hint describing its precedence and whether it is shared with other MCP tools.
+
+> **Pi requires `pi-mcp-adapter`** — Pi has no built-in MCP support. Before MCP servers will work, install the adapter: `pi install npm:pi-mcp-adapter` and restart Pi. The CLI will remind you of this when Pi is selected as a target.
 
 Every suggested path is shown as editable text — auto-detection is a convenience, not a requirement.
 

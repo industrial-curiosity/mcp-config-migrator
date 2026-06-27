@@ -34,7 +34,7 @@ async function selectScopeAndPath(
   if (candidates.length > 1) {
     const scopeId = await p.select({
       message: `Which ${ideLabel} config scope?`,
-      options: candidates.map((c) => ({ value: c.scopeId, label: c.label, hint: c.path })),
+      options: candidates.map((c) => ({ value: c.scopeId, label: c.label, hint: c.hint ? `${c.path} · ${c.hint}` : c.path })),
     });
     candidate = candidates.find((c) => c.scopeId === unwrap(scopeId))!;
   }
@@ -155,6 +155,13 @@ async function runFlow(options: RunCliOptions): Promise<void> {
         "Heads up",
       );
     }
+  }
+
+  if (targetAdapter.id === "pi") {
+    p.note(
+      "Pi has no built-in MCP support. Install pi-mcp-adapter first:\n\n  pi install npm:pi-mcp-adapter\n\nRestart Pi after installation.",
+      "Prerequisites for Pi",
+    );
   }
 
   await maybeBackup(settingsPath, {
