@@ -32,8 +32,6 @@ The editor is opened with the skip instruction header followed by the server's n
 
 **Alternative considered**: a separate `p.multiselect` for "which to skip" alongside "which to edit." Rejected — two multi-selects adds friction; the editor-clear convention is a well-understood pattern for this class of CLI tool.
 
-**Alternative considered**: a separate `p.multiselect` for "which to skip" alongside "which to edit." Rejected — two multi-selects adds friction; the editor-clear convention is a well-understood pattern for this class of CLI tool.
-
 ### 3. `ManualEdits` as an explicit type passed to `summarize`
 
 The edit step returns `{ updatedConfig: NormalizedConfig; manualEdits: ManualEdits }` where `ManualEdits = { edited: Set<string>; skipped: Set<string> }`. `summarize()` gains an optional third parameter. The reclassification logic (original classification × manual edit action → summary bucket) lives inside `summarize`.

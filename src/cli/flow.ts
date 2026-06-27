@@ -9,6 +9,7 @@ import { defaultSettingsPath } from "../model/versionsStore.js";
 import type { NormalizedConfig } from "../model/types.js";
 import { maybeBackup } from "./backupFlow.js";
 import { unwrap, withCancelHandling } from "./cancel.js";
+import { editMergedServers } from "./editStep.js";
 import { resolveMergeConflict } from "./mergeFlow.js";
 
 export interface RunCliOptions {
@@ -120,13 +121,17 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   const conflicts = classifications.filter((entry) => entry.kind === "conflict");
   const resolutions = await resolveConflicts(conflicts, env, platform);
 
-  const summary = summarize(classifications, resolutions);
+  const merged = applyMerge(targetConfig, classifications, resolutions);
+  const { updatedConfig, manualEdits } = await editMergedServers(merged, env, platform);
+
+  const summary = summarize(classifications, resolutions, manualEdits);
   const formatCategory = (label: string, category: { count: number; names: string[] }): string =>
     category.count === 0 ? `${label} (0)` : `${label} (${category.count}): ${category.names.join(", ")}`;
   p.note(
     [
       formatCategory("Added", summary.added),
       formatCategory("Unchanged", summary.unchanged),
+      formatCategory("Skipped", summary.skipped),
       `Conflicts resolved (${summary.conflicts.total}):`,
       `  ${formatCategory("accept target", summary.conflicts.acceptTarget)}`,
       `  ${formatCategory("accept source", summary.conflicts.acceptSource)}`,
@@ -140,8 +145,6 @@ async function runFlow(options: RunCliOptions): Promise<void> {
     p.outro("No changes were made.");
     return;
   }
-
-  const merged = applyMerge(targetConfig, classifications, resolutions);
 
   if (targetAdapter.id === "claude-code" && target.scopeId === "project") {
     const names = changedServerNames(classifications, resolutions);
@@ -171,13 +174,13 @@ async function runFlow(options: RunCliOptions): Promise<void> {
     config: targetConfig,
   });
 
-  const saveResult = await targetAdapter.save(target.path, merged);
+  const saveResult = await targetAdapter.save(target.path, updatedConfig);
   for (const dropped of saveResult.droppedFields) {
     p.log.warn(`Dropped fields for "${dropped.serverName}" not supported by ${targetAdapter.label}: ${dropped.fields.join(", ")}`);
   }
   p.log.success(`Wrote merged config to ${target.path}`);
 
-  await runCleanup(targetAdapter, target.path, merged);
+  await runCleanup(targetAdapter, target.path, updatedConfig);
 
   p.outro("Done.");
 }

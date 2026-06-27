@@ -67,7 +67,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("user"); // target scope
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit: no servers selected
+        .mockResolvedValueOnce([]); // cleanup: nothing to remove
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -118,7 +120,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("accept-source");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit
+        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -160,14 +164,16 @@ describe("runCli", () => {
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       editTextMock.mockResolvedValueOnce('{\n  "transport": "stdio",\n  "command": "hand-merged"\n}\n');
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit
+        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
       const written = await readJson(targetPath);
       expect(written.mcpServers).toEqual({ merge1: { command: "hand-merged" } });
       expect(note).toHaveBeenCalledWith(expect.stringContaining("merged (1): merge1"), "Migration summary");
-      // Merged entries count as changed for the Claude Code re-approval notice path.
+      // Only the conflict merge editor call; pre-summary edit selected nothing.
       expect(editTextMock).toHaveBeenCalledTimes(1);
     });
   });
@@ -224,7 +230,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("project");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce(["beta"]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit: no edits
+        .mockResolvedValueOnce(["beta"]); // cleanup: remove beta
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -250,7 +258,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("project");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit
+        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -276,7 +286,9 @@ describe("runCli", () => {
         .mockResolvedValueOnce("user");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]);
+      multiselect
+        .mockResolvedValueOnce([]) // pre-summary edit
+        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
