@@ -2,12 +2,12 @@
 
 ### Requirement: Supported IDE list
 
-The system SHALL support exactly VS Code, Cursor, Claude Code, and Pi as selectable source and target IDEs.
+The system SHALL support exactly Claude Code, Cursor, Pi, and VS Code as selectable source and target IDEs.
 
 #### Scenario: Selecting source and target
 
 - **WHEN** the user is prompted to choose a source IDE and, separately, a target IDE
-- **THEN** the only options offered are VS Code, Cursor, Claude Code, and Pi
+- **THEN** the only options offered are Claude Code, Cursor, Pi, and VS Code
 
 ### Requirement: Config scope selection
 

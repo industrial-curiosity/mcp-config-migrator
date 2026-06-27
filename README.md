@@ -15,8 +15,9 @@ You'll be asked to:
 1. Pick a **source** IDE and config scope/path (a sensible default is suggested and pre-filled, but always editable).
 2. Pick a **target** IDE and config scope/path the same way.
 3. Review any entries that exist in both configs with different definitions, and choose for each one: accept the source's version, accept the target's version, or merge — which opens an editor with both versions combined and conflicting fields marked git-style (`<<<<<<<`/`=======`/`>>>>>>>`) so you can resolve them by hand.
-4. Confirm a summary (added / unchanged / conflicts resolved) before anything is written.
-5. After writing, optionally remove any server entries from the target as a cleanup step.
+4. Optionally edit any of the merged servers before the summary is shown — select which (if any) to open in your `$EDITOR`. To skip a server entirely (omit it from the write), clear the file and save; the first line of the editor reminds you of this. Skipped servers appear as **Skipped** in the summary; manually edited unchanged servers appear under **Conflicts resolved → merged**.
+5. Confirm a summary (added / skipped / unchanged / conflicts resolved) before anything is written.
+6. After writing, optionally remove any server entries from the target as a cleanup step.
 
 Nothing is written to disk until you explicitly confirm. Right before the write, you'll be asked whether to back up the target's *current* MCP server entries (not the rest of the file) to a version history — answer "Yes, always" or "No, never" to stop being asked and remember that choice for future runs, or "Yes"/"No" to decide just this once. Answering "Yes" (either form) also asks where to store the backup, pre-filled with the current default and editable; once a backup is written — including silently, when the preference is "always back up" — its storage location is always displayed. You can cancel at any prompt (Ctrl+C) with no changes made and no backup recorded.
 
@@ -26,16 +27,16 @@ If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Cod
 
 | IDE | Scope | Config key | Default path |
 |---|---|---|---|
-| VS Code | Workspace | `servers` | `<project>/.vscode/mcp.json` |
-| VS Code | User | `servers` | macOS: `~/Library/Application Support/Code/User/mcp.json`; Linux: `$XDG_CONFIG_HOME/Code/User/mcp.json` (falls back to `~/.config/...`); Windows: `%APPDATA%\Code\User\mcp.json` |
-| Cursor | Global | `mcpServers` | `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) |
-| Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Claude Code | User | `mcpServers` (inside `~/.claude.json`) | `$CLAUDE_CONFIG_DIR/.claude.json` if set, else `~/.claude.json` |
 | Claude Code | Project | `mcpServers` (inside `.mcp.json`) | `<project>/.mcp.json` |
+| Cursor | Global | `mcpServers` | `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) |
+| Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Pi | Global shared | `mcpServers` | `~/.config/mcp/mcp.json` |
 | Pi | Pi global override | `mcpServers` | `~/.pi/agent/mcp.json` |
 | Pi | Project shared | `mcpServers` | `<project>/.mcp.json` |
 | Pi | Pi project override | `mcpServers` | `<project>/.pi/mcp.json` |
+| VS Code | Workspace | `servers` | `<project>/.vscode/mcp.json` |
+| VS Code | User | `servers` | macOS: `~/Library/Application Support/Code/User/mcp.json`; Linux: `$XDG_CONFIG_HOME/Code/User/mcp.json` (falls back to `~/.config/...`); Windows: `%APPDATA%\Code\User\mcp.json` |
 
 Pi config files are loaded in the order listed; later entries override earlier ones. When selecting a Pi scope, each option shows a hint describing its precedence and whether it is shared with other MCP tools.
 
@@ -76,9 +77,12 @@ npx mcp-config-migrator --help                   # or -h, /?
 │  ● Project (.mcp.json)
 ◆  Confirm the Claude Code config path (Project (.mcp.json)):
 │  ./.mcp.json
+◆  Edit any server before writing? (clear the editor to skip a server — none required)
+│  (none selected)
 ◆  Migration summary
 │  Added (2): fetch, github
 │  Unchanged (1): filesystem
+│  Skipped (0)
 │  Conflicts resolved (0):
 │    accept target (0)
 │    accept source (0)
