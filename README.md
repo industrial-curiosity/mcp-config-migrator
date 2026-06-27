@@ -26,16 +26,16 @@ If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Cod
 
 | IDE | Scope | Config key | Default path |
 |---|---|---|---|
-| VS Code | Workspace | `servers` | `<project>/.vscode/mcp.json` |
-| VS Code | User | `servers` | macOS: `~/Library/Application Support/Code/User/mcp.json`; Linux: `$XDG_CONFIG_HOME/Code/User/mcp.json` (falls back to `~/.config/...`); Windows: `%APPDATA%\Code\User\mcp.json` |
-| Cursor | Global | `mcpServers` | `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) |
-| Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Claude Code | User | `mcpServers` (inside `~/.claude.json`) | `$CLAUDE_CONFIG_DIR/.claude.json` if set, else `~/.claude.json` |
 | Claude Code | Project | `mcpServers` (inside `.mcp.json`) | `<project>/.mcp.json` |
+| Cursor | Global | `mcpServers` | `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) |
+| Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Pi | Global shared | `mcpServers` | `~/.config/mcp/mcp.json` |
 | Pi | Pi global override | `mcpServers` | `~/.pi/agent/mcp.json` |
 | Pi | Project shared | `mcpServers` | `<project>/.mcp.json` |
 | Pi | Pi project override | `mcpServers` | `<project>/.pi/mcp.json` |
+| VS Code | Workspace | `servers` | `<project>/.vscode/mcp.json` |
+| VS Code | User | `servers` | macOS: `~/Library/Application Support/Code/User/mcp.json`; Linux: `$XDG_CONFIG_HOME/Code/User/mcp.json` (falls back to `~/.config/...`); Windows: `%APPDATA%\Code\User\mcp.json` |
 
 Pi config files are loaded in the order listed; later entries override earlier ones. When selecting a Pi scope, each option shows a hint describing its precedence and whether it is shared with other MCP tools.
 

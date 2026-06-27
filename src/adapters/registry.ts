@@ -1,10 +1,10 @@
 import type { IdeAdapter } from "./types.js";
-import { vscodeAdapter } from "./vscode.js";
-import { cursorAdapter } from "./cursor.js";
 import { claudeCodeAdapter } from "./claudeCode.js";
+import { cursorAdapter } from "./cursor.js";
 import { piAdapter } from "./pi.js";
+import { vscodeAdapter } from "./vscode.js";
 
-export const adapters: readonly IdeAdapter[] = [vscodeAdapter, cursorAdapter, claudeCodeAdapter, piAdapter];
+export const adapters: readonly IdeAdapter[] = [claudeCodeAdapter, cursorAdapter, piAdapter, vscodeAdapter];
 
 const adapterById = new Map(adapters.map((adapter) => [adapter.id, adapter]));
 
