@@ -2,6 +2,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { withTmpDir } from "../test/tmp.js";
+import { codexAdapter } from "../adapters/codex.js";
 import { setPreference } from "../model/versionsStore.js";
 
 const { CANCEL } = vi.hoisted(() => ({ CANCEL: Symbol("cancel") }));
@@ -50,6 +51,50 @@ async function settingsPathWithBackupOff(dir: string): Promise<string> {
 }
 
 describe("runCli", () => {
+  it("migrates additions from Cursor to a new Codex project config", async () => {
+    await withTmpDir(async (dir) => {
+      const sourcePath = join(dir, "source-mcp.json");
+      const targetPath = join(dir, ".codex", "config.toml");
+      await writeFile(sourcePath, JSON.stringify({ mcpServers: { alpha: { command: "node", args: ["alpha.js"] } } }), "utf8");
+
+      select
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("global")
+        .mockResolvedValueOnce("codex")
+        .mockResolvedValueOnce("project");
+      text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
+      confirm.mockResolvedValueOnce(true);
+      multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
+
+      await expect(codexAdapter.load(targetPath)).resolves.toEqual({
+        servers: [{ name: "alpha", transport: "stdio", command: "node", args: ["alpha.js"] }],
+      });
+    });
+  });
+
+  it("removes a server from a Codex target during cleanup", async () => {
+    await withTmpDir(async (dir) => {
+      const sourcePath = join(dir, "source-mcp.json");
+      const targetPath = join(dir, ".codex", "config.toml");
+      await writeFile(sourcePath, JSON.stringify({ mcpServers: { alpha: { command: "node" } } }), "utf8");
+
+      select
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("global")
+        .mockResolvedValueOnce("codex")
+        .mockResolvedValueOnce("project");
+      text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
+      confirm.mockResolvedValueOnce(true);
+      multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce(["alpha"]);
+
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
+
+      await expect(codexAdapter.load(targetPath)).resolves.toEqual({ servers: [] });
+    });
+  });
+
   it("migrates additions from Cursor to a non-existent VS Code target", async () => {
     await withTmpDir(async (dir) => {
       const sourcePath = join(dir, "source-mcp.json");

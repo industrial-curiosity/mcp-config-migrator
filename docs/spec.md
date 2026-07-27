@@ -1,6 +1,6 @@
 # Architecture
 
-`mcp-config-migrator` is a one-shot interactive CLI (`npx mcp-config-migrator`) that migrates MCP server entries between VS Code, Cursor, Claude Code, and Pi config files. There is no daemon, watch mode, or two-way sync — each run reads a source and a target config, lets the user resolve any conflicts, optionally edit any merged server before the summary, and writes the merged result back to the target.
+`mcp-config-migrator` is a one-shot interactive CLI (`npx mcp-config-migrator`) that migrates MCP server entries between VS Code, Cursor, Claude Code, Codex, and Pi config files. There is no daemon, watch mode, or two-way sync — each run reads a source and a target config, lets the user resolve any conflicts, optionally edit any merged server before the summary, and writes the merged result back to the target.
 
 ## Layers
 
@@ -25,9 +25,9 @@ Each `IdeAdapter` (`src/adapters/types.ts`) implements:
 
 - `resolveDefaultPaths(env, platform, cwd)` — labeled path candidates per scope, computed from the platform and relevant env vars (e.g. `CLAUDE_CONFIG_DIR`, `XDG_CONFIG_HOME`). These are always presented to the user as editable suggestions, never applied silently.
 - `load(path)` — parses the file into a `NormalizedConfig`. A missing file loads as empty rather than erroring.
-- `save(path, normalized)` — a **surgical** read-modify-write: only the server-map key (`servers` for VS Code, `mcpServers` for Cursor/Claude Code) is replaced; every other top-level key in the file (e.g. `~/.claude.json`'s OAuth/trust state) is preserved untouched.
+- `save(path, normalized)` — a **surgical** read-modify-write: only the server-map key (`servers` for VS Code, `mcpServers` for Cursor/Claude Code, or `mcp_servers.<name>` tables for Codex) is replaced; every other configuration setting is preserved untouched.
 
-VS Code's adapter uses `jsonc-parser` so that comments in `mcp.json` survive a write. Cursor and Claude Code's files are plain JSON. Shared per-entry field-splitting logic (known vs. `extra`) lives in `src/adapters/entryFields.ts`; the adapter registry (`src/adapters/registry.ts`) maps an IDE id to its adapter instance.
+VS Code's adapter uses `jsonc-parser` so that comments in `mcp.json` survive a write. Cursor and Claude Code's files are plain JSON. Codex's adapter parses TOML with `@iarna/toml` and replaces only its `mcp_servers.<name>` table ranges, retaining unrelated TOML content and formatting. Codex maps `command` entries to stdio and `url` entries to streamable HTTP; Codex-only fields remain in `extra` and are retained only for Codex round trips. Shared JSON per-entry field-splitting logic (known vs. `extra`) lives in `src/adapters/entryFields.ts`; the adapter registry (`src/adapters/registry.ts`) maps an IDE id to its adapter instance.
 
 ### Engine (`src/engine/`)
 
