@@ -4,6 +4,12 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- Codex MCP configuration support for user (`~/.codex/config.toml`) and trusted-project (`.codex/config.toml`) scopes, including stdio and streamable HTTP servers.
+
 ## [0.2.0] - 2026-06-27
 
 ### Added

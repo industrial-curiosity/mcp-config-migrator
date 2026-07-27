@@ -11,6 +11,7 @@ export {
 
 export type { IdeAdapter, DefaultPathCandidate, SaveResult, DroppedExtraFields } from "./adapters/types.js";
 export { adapters, getAdapter } from "./adapters/registry.js";
+export { codexAdapter } from "./adapters/codex.js";
 
 export type { ClassificationKind, ClassifiedEntry } from "./engine/classify.js";
 export { classify } from "./engine/classify.js";

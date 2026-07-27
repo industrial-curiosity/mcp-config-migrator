@@ -1,13 +1,14 @@
 {
   "name": "mcp-config-migrator",
   "version": "0.2.0",
-  "description": "Interactively migrate and merge MCP server configurations between VS Code, Cursor, and Claude Code.",
+  "description": "Interactively migrate and merge MCP server configurations between VS Code, Cursor, Claude Code, Codex, and Pi.",
   "keywords": [
     "mcp",
     "cli",
     "vscode",
     "cursor",
-    "claude-code"
+    "claude-code",
+    "codex"
   ],
   "homepage": "https://github.com/industrial-curiosity/mcp-config-migrator#readme",
   "bugs": {
@@ -48,6 +49,7 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.5.1",
+    "@iarna/toml": "^2.2.5",
     "diff": "^9.0.0",
     "jsonc-parser": "^3.3.1"
   },

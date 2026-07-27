@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { withTmpDir } from "../test/tmp.js";
+import { codexAdapter } from "../adapters/codex.js";
 import { appendVersion, readVersionsStore } from "../model/versionsStore.js";
 import type { BackupVersion } from "../model/versionsStore.js";
 
@@ -109,6 +110,26 @@ describe("runRestore", () => {
 
       const written = JSON.parse(await readFile(claudePath, "utf8"));
       expect(written.mcpServers).toEqual({ beta: { command: "node" } });
+    });
+  });
+
+  it("restores a Codex backup to its recorded TOML config path", async () => {
+    await withTmpDir(async (dir) => {
+      const settingsPath = join(dir, "settings.json");
+      const codexPath = join(dir, ".codex", "config.toml");
+      await appendVersion(
+        settingsPath,
+        entry({ ideId: "codex", scopeId: "project", path: codexPath, servers: [{ name: "beta", transport: "stdio", command: "node" }] }),
+      );
+
+      select.mockResolvedValueOnce(0);
+      confirm.mockResolvedValueOnce(true);
+
+      await runRestore({ filePath: settingsPath });
+
+      await expect(codexAdapter.load(codexPath)).resolves.toEqual({
+        servers: [{ name: "beta", transport: "stdio", command: "node" }],
+      });
     });
   });
 });

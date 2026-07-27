@@ -1,6 +1,6 @@
 # mcp-config-migrator
 
-Interactively migrate and merge MCP (Model Context Protocol) server configurations between VS Code, Cursor, Claude Code, and Pi.
+Interactively migrate and merge MCP (Model Context Protocol) server configurations between VS Code, Cursor, Claude Code, Codex, and Pi.
 
 If you configure MCP servers in one editor and want the same servers available in another — or want to keep two editors' configs in sync — this CLI walks you through picking a source and target, shows you what would change, lets you resolve any conflicts, and writes the result back in the target's native format.
 
@@ -29,6 +29,8 @@ If you migrate into a Claude Code project-scope config (`.mcp.json`), Claude Cod
 |---|---|---|---|
 | Claude Code | User | `mcpServers` (inside `~/.claude.json`) | `$CLAUDE_CONFIG_DIR/.claude.json` if set, else `~/.claude.json` |
 | Claude Code | Project | `mcpServers` (inside `.mcp.json`) | `<project>/.mcp.json` |
+| Codex | User | `mcp_servers.<name>` TOML tables | `~/.codex/config.toml` |
+| Codex | Project | `mcp_servers.<name>` TOML tables | `<project>/.codex/config.toml` |
 | Cursor | Global | `mcpServers` | `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) |
 | Cursor | Project | `mcpServers` | `<project>/.cursor/mcp.json` |
 | Pi | Global shared | `mcpServers` | `~/.config/mcp/mcp.json` |
@@ -44,7 +46,7 @@ Pi config files are loaded in the order listed; later entries override earlier o
 
 Every suggested path is shown as editable text — auto-detection is a convenience, not a requirement.
 
-VS Code requires a `type` (`stdio`/`http`/`sse`) on every entry; Cursor and Claude Code make `type` optional for `stdio` entries. Fields specific to one IDE (e.g. VS Code's `sandbox` options) are preserved when round-tripping through that same IDE, but dropped — with a warning — when migrating to a different IDE, since there's no equivalent field to write them into.
+VS Code requires a `type` (`stdio`/`http`/`sse`) on every entry; Cursor and Claude Code make `type` optional for `stdio` entries. Codex uses TOML tables and distinguishes stdio servers by `command` and streamable HTTP servers by `url`. Codex project configuration is loaded only for trusted projects. Fields specific to one IDE (e.g. VS Code's `sandbox` options or Codex's tool approval settings) are preserved when round-tripping through that same IDE, but dropped — with a warning — when migrating to a different IDE, since there's no equivalent field to write them into. Codex does not support SSE servers, so an SSE entry targeting Codex is skipped with a warning.
 
 Writes to `~/.claude.json` only touch the `mcpServers` key; OAuth session data, trust state, and any other content in that file is left untouched.
 
