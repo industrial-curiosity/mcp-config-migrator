@@ -1,23 +1,29 @@
-# Spec: pre-summary-edit
+# Pre-Summary Edit
+
+## Purpose
+
+Define the interactive server-management step that runs before migration confirmation.
+
+## Requirements
 
 ### Requirement: Optional pre-summary edit step
 
-After conflict resolution and before the migration summary, the system SHALL present an optional multiselect prompt listing all servers in the merged configuration, allowing the user to choose zero or more servers to edit manually before the summary is shown or any file is written. The prompt message SHALL explain the skip mechanic so the user knows before selecting that clearing the editor is how to exclude a server.
+After conflict resolution and before the migration summary, the system SHALL present an optional iterative server-management menu over the current merged configuration. The menu SHALL let the user select one current server to edit, delete a server through the editor's skip behavior, or finish editing. After each edit or deletion, the menu SHALL present the updated list of servers. Selecting finish without making changes SHALL leave the merged configuration unchanged and proceed directly to the migration summary.
 
-#### Scenario: No servers selected
+#### Scenario: User finishes without edits
 
-- **WHEN** the user selects no servers in the pre-summary edit prompt
+- **WHEN** the user selects finish at the pre-summary server-management menu before editing or deleting any server
 - **THEN** the merged configuration is unchanged and the flow proceeds directly to the migration summary
 
-#### Scenario: Prompt message includes skip instruction
+#### Scenario: User edits a server and returns to the menu
 
-- **WHEN** the pre-summary edit multiselect prompt is shown
-- **THEN** the prompt message includes the text "clear the editor to skip a server" (or equivalent) so the user knows the skip mechanic before making selections
+- **WHEN** the user selects a server and saves a valid edited definition
+- **THEN** the system replaces that server in the merged configuration and presents the server-management menu again
 
-#### Scenario: One or more servers selected for editing
+#### Scenario: User deletes a server and returns to the menu
 
-- **WHEN** the user selects one or more servers in the pre-summary edit prompt
-- **THEN** the system opens the configured editor for each selected server in sequence, showing the server's normalized JSON definition
+- **WHEN** the user selects a server and saves an editor skip signal
+- **THEN** the system removes that server from the merged configuration and presents the server-management menu again without the removed server
 
 ### Requirement: Server editing via normalized JSON
 
@@ -33,7 +39,7 @@ The skip signal check SHALL strip the skip instruction header line and then trea
 #### Scenario: User saves a valid edited definition
 
 - **WHEN** the user saves the editor with a valid normalized JSON object
-- **THEN** the server's definition in the merged configuration is replaced with the edited definition
+- **THEN** the server's definition in the merged configuration is replaced with the edited definition and the management menu is shown again
 
 #### Scenario: User saves an invalid definition
 

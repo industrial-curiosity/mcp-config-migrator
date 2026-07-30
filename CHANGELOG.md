@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- `edit` command for interactively editing or deleting MCP servers in one selected IDE configuration, with the same confirmation, backup, and surgical-save behavior as migration.
+- Iterative pre-summary server management for migrations: edit or delete one server at a time and return to the updated list before confirming the write.
+
 ## [0.3.0] - 2026-07-28
 
 ### Added
