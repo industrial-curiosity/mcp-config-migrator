@@ -1,13 +1,19 @@
-# Spec: cli-workflow
+# CLI Workflow
+
+## Purpose
+
+Define interactive migration and direct-edit workflows for MCP configuration files.
+
+## Requirements
 
 ### Requirement: Interactive entry point
 
-Running `npx mcp-config-migrator` SHALL start an interactive CLI session that guides the user through source IDE selection, target IDE selection, config path confirmation for each, conflict resolution, an optional pre-summary edit step, write confirmation, and optional cleanup, in that order.
+Running `npx mcp-config-migrator` SHALL start an interactive CLI session that guides the user through source IDE selection, target IDE selection, config path confirmation for each, conflict resolution, an optional iterative pre-summary server-management step, and write confirmation, in that order.
 
 #### Scenario: Standard run order
 
 - **WHEN** the user runs `npx mcp-config-migrator`
-- **THEN** the CLI prompts, in order: source IDE, source scope/path, target IDE, target scope/path, conflict resolution (if any conflicts exist), then the optional pre-summary edit step, then the migration summary and write confirmation before any file is written
+- **THEN** the CLI prompts, in order: source IDE, source scope/path, target IDE, target scope/path, conflict resolution (if any conflicts exist), then the optional iterative pre-summary server-management step, then the migration summary and write confirmation before any file is written
 
 ### Requirement: Final write confirmation
 
@@ -55,16 +61,11 @@ When a migration adds or changes project-scoped server entries in a Claude Code 
 - **WHEN** the target is not Claude Code project scope, or no project-scoped entries were added or changed
 - **THEN** no re-approval notice is shown
 
-### Requirement: Post-migration cleanup
+### Requirement: Iterative server management before migration write
 
-After a successful migration write, the system SHALL offer the user a multi-select prompt listing all server entries currently in the target configuration, allowing the user to choose entries to remove, and SHALL re-save the target file if any entries were removed.
+The system SHALL use the iterative server-management menu after conflict resolution and before the migration summary. It SHALL apply all resulting edits and deletions to the configuration displayed in the summary and saved after confirmation.
 
-#### Scenario: User removes entries during cleanup
+#### Scenario: Migration summary includes managed servers
 
-- **WHEN** the user selects one or more server entries to remove during the post-migration cleanup prompt
-- **THEN** the system removes those entries from the target configuration and saves the result
-
-#### Scenario: User skips cleanup
-
-- **WHEN** the user selects no entries during the post-migration cleanup prompt
-- **THEN** the target configuration is left as it was immediately after the migration write
+- **WHEN** the user edits or deletes one or more servers in the pre-summary management menu
+- **THEN** the migration summary reflects the resulting configuration before the user is asked to confirm the write

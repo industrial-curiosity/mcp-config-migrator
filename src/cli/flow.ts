@@ -6,7 +6,6 @@ import { renderConflictDiff } from "../engine/diff.js";
 import { applyMerge, type ConflictResolutions } from "../engine/merge.js";
 import { isNoOp, summarize } from "../engine/summary.js";
 import { defaultSettingsPath } from "../model/versionsStore.js";
-import type { NormalizedConfig } from "../model/types.js";
 import { maybeBackup } from "./backupFlow.js";
 import { unwrap, withCancelHandling } from "./cancel.js";
 import { editMergedServers } from "./editStep.js";
@@ -19,7 +18,7 @@ export interface RunCliOptions {
   settingsPath?: string;
 }
 
-async function selectIde(message: string): Promise<string> {
+export async function selectIde(message: string): Promise<string> {
   const choice = await p.select({
     message,
     options: adapters.map((adapter) => ({ value: adapter.id, label: adapter.label })),
@@ -27,7 +26,7 @@ async function selectIde(message: string): Promise<string> {
   return unwrap(choice);
 }
 
-async function selectScopeAndPath(
+export async function selectScopeAndPath(
   ideLabel: string,
   candidates: DefaultPathCandidate[],
 ): Promise<{ scopeId: string; path: string }> {
@@ -180,36 +179,7 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   }
   p.log.success(`Wrote merged config to ${target.path}`);
 
-  await runCleanup(targetAdapter, target.path, updatedConfig);
-
   p.outro("Done.");
-}
-
-async function runCleanup(
-  targetAdapter: ReturnType<typeof getAdapter>,
-  targetPath: string,
-  merged: NormalizedConfig,
-): Promise<void> {
-  if (merged.servers.length === 0) return;
-
-  const result = await p.multiselect({
-    message: "Remove any MCP servers from the target before finishing? (none required)",
-    options: merged.servers.map((server) => ({ value: server.name, label: server.name })),
-    required: false,
-  });
-  if (p.isCancel(result)) {
-    p.log.info("Skipped cleanup.");
-    return;
-  }
-  const toRemove = result;
-
-  if (toRemove.length === 0) return;
-
-  const remaining: NormalizedConfig = {
-    servers: merged.servers.filter((server) => !toRemove.includes(server.name)),
-  };
-  await targetAdapter.save(targetPath, remaining);
-  p.log.success(`Removed: ${toRemove.join(", ")}`);
 }
 
 export async function runCli(options: RunCliOptions = {}): Promise<void> {

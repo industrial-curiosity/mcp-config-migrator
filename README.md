@@ -10,14 +10,21 @@ If you configure MCP servers in one editor and want the same servers available i
 npx mcp-config-migrator
 ```
 
+To manage the MCP servers in one configuration without migrating from another IDE:
+
+```sh
+npx mcp-config-migrator edit
+```
+
+Choose an IDE and config path, then select one server at a time to edit or delete. Changes remain in memory until you review the edit/delete summary and confirm the write; the existing backup preference applies to that write.
+
 You'll be asked to:
 
 1. Pick a **source** IDE and config scope/path (a sensible default is suggested and pre-filled, but always editable).
 2. Pick a **target** IDE and config scope/path the same way.
 3. Review any entries that exist in both configs with different definitions, and choose for each one: accept the source's version, accept the target's version, or merge — which opens an editor with both versions combined and conflicting fields marked git-style (`<<<<<<<`/`=======`/`>>>>>>>`) so you can resolve them by hand.
-4. Optionally edit any of the merged servers before the summary is shown — select which (if any) to open in your `$EDITOR`. To skip a server entirely (omit it from the write), clear the file and save; the first line of the editor reminds you of this. Skipped servers appear as **Skipped** in the summary; manually edited unchanged servers appear under **Conflicts resolved → merged**.
+4. Optionally manage the merged servers one at a time before the summary is shown — select a server to open in your `$EDITOR`, then return to the updated list. To skip a server entirely (omit it from the write), clear the file and save; the first line of the editor reminds you of this. Skipped servers appear as **Skipped** in the summary; manually edited unchanged servers appear under **Conflicts resolved → merged**.
 5. Confirm a summary (added / skipped / unchanged / conflicts resolved) before anything is written.
-6. After writing, optionally remove any server entries from the target as a cleanup step.
 
 Nothing is written to disk until you explicitly confirm. Right before the write, you'll be asked whether to back up the target's *current* MCP server entries (not the rest of the file) to a version history — answer "Yes, always" or "No, never" to stop being asked and remember that choice for future runs, or "Yes"/"No" to decide just this once. Answering "Yes" (either form) also asks where to store the backup, pre-filled with the current default and editable; once a backup is written — including silently, when the preference is "always back up" — its storage location is always displayed. You can cancel at any prompt (Ctrl+C) with no changes made and no backup recorded.
 

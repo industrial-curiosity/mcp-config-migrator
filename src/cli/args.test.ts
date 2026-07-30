@@ -6,6 +6,10 @@ describe("parseArgs", () => {
     expect(parseArgs([])).toEqual({ kind: "migrate" });
   });
 
+  it("returns edit for the edit command", () => {
+    expect(parseArgs(["edit"])).toEqual({ kind: "edit" });
+  });
+
   it.each(["--help", "-h", "/?"])("returns help for %s", (flag) => {
     expect(parseArgs([flag])).toEqual({ kind: "help" });
   });

@@ -17,7 +17,6 @@ vi.mock("@clack/prompts", () => ({
   select: vi.fn(),
   text: vi.fn(),
   confirm: vi.fn(),
-  multiselect: vi.fn(),
 }));
 
 vi.mock("./editor.js", () => ({ editText: vi.fn() }));
@@ -29,7 +28,6 @@ import { runCli } from "./flow.js";
 const select = p.select as unknown as Mock;
 const text = p.text as unknown as Mock;
 const confirm = p.confirm as unknown as Mock;
-const multiselect = p.multiselect as unknown as Mock;
 const note = p.note as unknown as Mock;
 const outro = p.outro as unknown as Mock;
 const cancelFn = p.cancel as unknown as Mock;
@@ -37,6 +35,7 @@ const editTextMock = editText as unknown as Mock;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  select.mockReset();
 });
 
 async function readJson(path: string): Promise<Record<string, unknown>> {
@@ -61,10 +60,10 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("codex")
-        .mockResolvedValueOnce("project");
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce([]);
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -74,7 +73,7 @@ describe("runCli", () => {
     });
   });
 
-  it("removes a server from a Codex target during cleanup", async () => {
+  it("removes a server from a Codex target during pre-summary management", async () => {
     await withTmpDir(async (dir) => {
       const sourcePath = join(dir, "source-mcp.json");
       const targetPath = join(dir, ".codex", "config.toml");
@@ -84,10 +83,12 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("codex")
-        .mockResolvedValueOnce("project");
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("alpha")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect.mockResolvedValueOnce([]).mockResolvedValueOnce(["alpha"]);
+      editTextMock.mockResolvedValueOnce("");
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -109,12 +110,10 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor") // source ide
         .mockResolvedValueOnce("global") // source scope
         .mockResolvedValueOnce("vscode") // target ide
-        .mockResolvedValueOnce("user"); // target scope
+        .mockResolvedValueOnce("user") // target scope
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit: no servers selected
-        .mockResolvedValueOnce([]); // cleanup: nothing to remove
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -162,12 +161,10 @@ describe("runCli", () => {
         .mockResolvedValueOnce("project")
         // conflicts, in source-entry order: keep1, take1
         .mockResolvedValueOnce("accept-target")
-        .mockResolvedValueOnce("accept-source");
+        .mockResolvedValueOnce("accept-source")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit
-        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -205,13 +202,11 @@ describe("runCli", () => {
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("project")
-        .mockResolvedValueOnce("merge"); // resolution choice for merge1
+        .mockResolvedValueOnce("merge") // resolution choice for merge1
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       editTextMock.mockResolvedValueOnce('{\n  "transport": "stdio",\n  "command": "hand-merged"\n}\n');
       confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit
-        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -253,38 +248,10 @@ describe("runCli", () => {
 
       expect(outro).toHaveBeenCalledWith(expect.stringContaining("Nothing to migrate"));
       expect(confirm).not.toHaveBeenCalled();
-      expect(multiselect).not.toHaveBeenCalled();
       expect(await readJson(targetPath)).toEqual(JSON.parse(content));
     });
   });
 
-  it("removes entries selected during post-migration cleanup", async () => {
-    await withTmpDir(async (dir) => {
-      const sourcePath = join(dir, "source-mcp.json");
-      const targetPath = join(dir, "target-mcp.json");
-      await writeFile(
-        sourcePath,
-        JSON.stringify({ mcpServers: { alpha: { command: "node" }, beta: { command: "node" } } }),
-        "utf8",
-      );
-
-      select
-        .mockResolvedValueOnce("cursor")
-        .mockResolvedValueOnce("global")
-        .mockResolvedValueOnce("cursor")
-        .mockResolvedValueOnce("project");
-      text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
-      confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit: no edits
-        .mockResolvedValueOnce(["beta"]); // cleanup: remove beta
-
-      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
-
-      const written = await readJson(targetPath);
-      expect(written.mcpServers).toEqual({ alpha: { command: "node" } });
-    });
-  });
 
   it("shows the Claude Code re-approval notice when project-scope entries change", async () => {
     await withTmpDir(async (dir) => {
@@ -300,12 +267,10 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("claude-code")
-        .mockResolvedValueOnce("project");
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit
-        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
@@ -328,12 +293,10 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("claude-code")
-        .mockResolvedValueOnce("user");
+        .mockResolvedValueOnce("user")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
       confirm.mockResolvedValueOnce(true);
-      multiselect
-        .mockResolvedValueOnce([]) // pre-summary edit
-        .mockResolvedValueOnce([]); // cleanup
 
       await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
 
