@@ -62,25 +62,19 @@ export async function editMergedServers(
   platform: NodeJS.Platform,
 ): Promise<{ updatedConfig: NormalizedConfig; manualEdits: ManualEdits }> {
   const manualEdits: ManualEdits = { edited: new Set(), skipped: new Set() };
-
-  if (merged.servers.length === 0) {
-    return { updatedConfig: merged, manualEdits };
-  }
-
-  const selected = await p.multiselect({
-    message: "Edit any server before writing? (clear the editor to skip a server — none required)",
-    options: merged.servers.map((s) => ({ value: s.name, label: s.name })),
-    required: false,
-  });
-
-  if (p.isCancel(selected) || (selected as string[]).length === 0) {
-    return { updatedConfig: merged, manualEdits };
-  }
-
-  const toEdit = selected as string[];
   const serverMap = new Map(merged.servers.map((s) => [s.name, s]));
 
-  for (const name of toEdit) {
+  while (serverMap.size > 0) {
+    const selected = await p.select<string | "done">({
+      message: "Manage MCP servers (select one to edit, or finish):",
+      options: [
+        ...[...serverMap.keys()].map((name) => ({ value: name, label: name })),
+        { value: "done", label: "Finish editing" },
+      ],
+    });
+    if (p.isCancel(selected) || selected === "done") break;
+
+    const name = selected;
     const server = serverMap.get(name);
     if (!server) continue;
 
