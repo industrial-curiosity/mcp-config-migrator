@@ -1,5 +1,21 @@
 # Direct Config Editing Delta
 
+## MODIFIED Requirements
+
+### Requirement: Direct edit review and write
+
+The system SHALL keep direct-edit changes in memory until it presents an add/edit/delete summary and the user explicitly confirms the write. After confirmation, it SHALL apply the configured backup policy and save through the selected adapter.
+
+#### Scenario: User confirms direct edits
+
+- **WHEN** the user completes server management and confirms the direct-edit summary
+- **THEN** the system backs up the selected configuration according to the existing backup policy and saves the final server configuration through its adapter
+
+#### Scenario: User declines direct edits
+
+- **WHEN** the user declines the direct-edit write confirmation
+- **THEN** the selected configuration file is not modified and no backup is recorded
+
 ## ADDED Requirements
 
 ### Requirement: Direct server creation
