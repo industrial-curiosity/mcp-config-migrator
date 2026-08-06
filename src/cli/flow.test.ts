@@ -50,6 +50,32 @@ async function settingsPathWithBackupOff(dir: string): Promise<string> {
 }
 
 describe("runCli", () => {
+  it("adds a server during migration even when there is nothing to import", async () => {
+    await withTmpDir(async (dir) => {
+      const sourcePath = join(dir, "source-mcp.json");
+      const targetPath = join(dir, "target-mcp.json");
+      await writeFile(sourcePath, JSON.stringify({ mcpServers: {} }), "utf8");
+      await writeFile(targetPath, JSON.stringify({ mcpServers: {} }), "utf8");
+
+      select
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("global")
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("add")
+        .mockResolvedValueOnce("stdio")
+        .mockResolvedValueOnce("done");
+      text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath).mockResolvedValueOnce("gamma");
+      editTextMock.mockResolvedValueOnce('{"transport":"stdio","command":"node"}');
+      confirm.mockResolvedValueOnce(true);
+
+      await runCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPathWithBackupOff(dir) });
+
+      expect(await readJson(targetPath)).toEqual({ mcpServers: { gamma: { command: "node" } } });
+      expect(note).toHaveBeenCalledWith(expect.stringContaining("Added (1): gamma"), "Migration summary");
+    });
+  });
+
   it("migrates additions from Cursor to a new Codex project config", async () => {
     await withTmpDir(async (dir) => {
       const sourcePath = join(dir, "source-mcp.json");
@@ -241,7 +267,8 @@ describe("runCli", () => {
         .mockResolvedValueOnce("cursor")
         .mockResolvedValueOnce("global")
         .mockResolvedValueOnce("cursor")
-        .mockResolvedValueOnce("project");
+        .mockResolvedValueOnce("project")
+        .mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(sourcePath).mockResolvedValueOnce(targetPath);
 
       await runCli({ cwd: dir, env: {}, platform: "linux" });
