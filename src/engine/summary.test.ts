@@ -3,7 +3,7 @@ import { classify } from "./classify.js";
 import { isNoOp, summarize, type ManualEdits } from "./summary.js";
 import type { NormalizedConfig } from "../model/types.js";
 
-const noEdits: ManualEdits = { edited: new Set(), skipped: new Set() };
+const noEdits: ManualEdits = { created: new Set(), edited: new Set(), skipped: new Set() };
 
 describe("summarize", () => {
   it("counts additions, unchanged entries, and conflicts by resolution (no ManualEdits)", () => {
@@ -73,12 +73,34 @@ describe("summarize", () => {
   });
 
   describe("ManualEdits reclassification", () => {
+    it("places a manually created server under added", () => {
+      const summary = summarize([], {}, {
+        created: new Set(["manual"]),
+        edited: new Set(),
+        skipped: new Set(),
+      });
+
+      expect(summary.added).toEqual({ count: 1, names: ["manual"] });
+    });
+
+    it("does not summarize a manually created server that was deleted", () => {
+      const summary = summarize([], {}, {
+        created: new Set(),
+        edited: new Set(),
+        skipped: new Set(),
+      });
+
+      expect(summary.added).toEqual({ count: 0, names: [] });
+      expect(summary.skipped).toEqual({ count: 0, names: [] });
+    });
+
     it("skipped add entry goes to skipped, not added", () => {
       const source: NormalizedConfig = {
         servers: [{ name: "newserver", transport: "stdio", command: "node" }],
       };
       const classifications = classify(source, { servers: [] });
       const summary = summarize(classifications, {}, {
+        created: new Set(),
         edited: new Set(),
         skipped: new Set(["newserver"]),
       });
@@ -93,6 +115,7 @@ describe("summarize", () => {
       };
       const classifications = classify(config, config);
       const summary = summarize(classifications, {}, {
+        created: new Set(),
         edited: new Set(),
         skipped: new Set(["same"]),
       });
@@ -110,6 +133,7 @@ describe("summarize", () => {
       };
       const classifications = classify(source, target);
       const summary = summarize(classifications, { conflict: { kind: "accept-target" } }, {
+        created: new Set(),
         edited: new Set(),
         skipped: new Set(["conflict"]),
       });
@@ -124,6 +148,7 @@ describe("summarize", () => {
       };
       const classifications = classify(config, config);
       const summary = summarize(classifications, {}, {
+        created: new Set(),
         edited: new Set(["same"]),
         skipped: new Set(),
       });
@@ -141,6 +166,7 @@ describe("summarize", () => {
       };
       const classifications = classify(source, target);
       const summary = summarize(classifications, { conflict: { kind: "accept-target" } }, {
+        created: new Set(),
         edited: new Set(["conflict"]),
         skipped: new Set(),
       });
@@ -155,6 +181,7 @@ describe("summarize", () => {
       };
       const classifications = classify(source, { servers: [] });
       const summary = summarize(classifications, {}, {
+        created: new Set(),
         edited: new Set(["newserver"]),
         skipped: new Set(),
       });

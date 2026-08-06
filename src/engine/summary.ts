@@ -2,6 +2,7 @@ import type { ClassifiedEntry } from "./classify.js";
 import type { ConflictResolutions } from "./merge.js";
 
 export interface ManualEdits {
+  created: Set<string>;
   edited: Set<string>;
   skipped: Set<string>;
 }
@@ -30,7 +31,7 @@ function toCategory(names: string[]): CategorySummary {
 export function summarize(
   classifications: ClassifiedEntry[],
   resolutions: ConflictResolutions,
-  manualEdits: ManualEdits = { edited: new Set(), skipped: new Set() },
+  manualEdits: ManualEdits = { created: new Set(), edited: new Set(), skipped: new Set() },
 ): MigrationSummary {
   const added: string[] = [];
   const unchanged: string[] = [];
@@ -61,6 +62,8 @@ export function summarize(
       }
     }
   }
+
+  added.push(...manualEdits.created);
 
   return {
     added: toCategory(added),

@@ -5,6 +5,7 @@ const { CANCEL } = vi.hoisted(() => ({ CANCEL: Symbol("cancel") }));
 vi.mock("@clack/prompts", () => ({
   isCancel: (value: unknown) => value === CANCEL,
   select: vi.fn(),
+  text: vi.fn(),
   log: { info: vi.fn(), error: vi.fn() },
 }));
 
@@ -16,6 +17,7 @@ import { editMergedServers, isSkipSignal, SKIP_HEADER } from "./editStep.js";
 import type { NormalizedConfig } from "../model/types.js";
 
 const select = p.select as unknown as Mock;
+const text = p.text as unknown as Mock;
 const logInfo = p.log.info as unknown as Mock;
 const editTextMock = editText as unknown as Mock;
 
@@ -25,6 +27,8 @@ const merged: NormalizedConfig = { servers: [serverA, serverB] };
 
 beforeEach(() => {
   vi.clearAllMocks();
+  select.mockReset();
+  text.mockReset();
 });
 
 describe("isSkipSignal", () => {
@@ -44,6 +48,7 @@ describe("editMergedServers", () => {
     const result = await editMergedServers(merged, {}, "linux");
 
     expect(result.updatedConfig).toEqual(merged);
+    expect(result.manualEdits.created.size).toBe(0);
     expect(result.manualEdits.edited.size).toBe(0);
     expect(editTextMock).not.toHaveBeenCalled();
   });
@@ -57,11 +62,77 @@ describe("editMergedServers", () => {
     expect(result.manualEdits.edited.size).toBe(0);
   });
 
-  it("does not prompt when the config has no servers", async () => {
+  it("offers add and finish actions when the config has no servers", async () => {
+    select.mockResolvedValueOnce("done");
+
     const result = await editMergedServers({ servers: [] }, {}, "linux");
 
-    expect(select).not.toHaveBeenCalled();
+    expect(select).toHaveBeenCalledTimes(1);
+    expect(select.mock.calls[0]![0].options).toEqual([
+      { value: "add", label: "Add a server" },
+      { value: "done", label: "Finish editing" },
+    ]);
     expect(result.updatedConfig).toEqual({ servers: [] });
+  });
+
+  it("adds a server using the selected transport template", async () => {
+    select.mockResolvedValueOnce("add").mockResolvedValueOnce("stdio").mockResolvedValueOnce("done");
+    text.mockResolvedValueOnce("gamma");
+    editTextMock.mockResolvedValueOnce('{"transport":"stdio","command":""}');
+
+    const result = await editMergedServers({ servers: [] }, {}, "linux");
+
+    expect(result.updatedConfig.servers).toEqual([{ name: "gamma", transport: "stdio", command: "" }]);
+    expect(result.manualEdits.created).toEqual(new Set(["gamma"]));
+    expect(editTextMock.mock.calls[0]![0]).toContain('"transport": "stdio"');
+    expect(editTextMock.mock.calls[0]![0]).toContain('"command": ""');
+  });
+
+  it.each([
+    ["stdio", '"command": ""'],
+    ["http", '"url": ""'],
+    ["sse", '"url": ""'],
+  ] as const)("opens a %s template with its primary field", async (transport, field) => {
+    select.mockResolvedValueOnce("add").mockResolvedValueOnce(transport).mockResolvedValueOnce("done");
+    text.mockResolvedValueOnce("gamma");
+    editTextMock.mockResolvedValueOnce(`{"transport":"${transport}"}`);
+
+    await editMergedServers({ servers: [] }, {}, "linux");
+
+    expect(editTextMock.mock.calls[0]![0]).toContain(`"transport": "${transport}"`);
+    expect(editTextMock.mock.calls[0]![0]).toContain(field);
+  });
+
+  it("rejects a duplicate server name in the name prompt validator", async () => {
+    select.mockResolvedValueOnce("add").mockResolvedValueOnce("stdio").mockResolvedValueOnce("done");
+    text.mockResolvedValueOnce("gamma");
+    editTextMock.mockResolvedValueOnce('{"transport":"stdio","command":"node"}');
+
+    await editMergedServers(merged, {}, "linux");
+
+    const validate = text.mock.calls[0]![0].validate as (value: string) => string | undefined;
+    expect(validate("alpha")).toContain("already exists");
+    expect(select.mock.calls).toHaveLength(3);
+    expect(editTextMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("removes a newly created server without recording a deletion", async () => {
+    select
+      .mockResolvedValueOnce("add")
+      .mockResolvedValueOnce("stdio")
+      .mockResolvedValueOnce("gamma")
+      .mockResolvedValueOnce("done");
+    text.mockResolvedValueOnce("gamma");
+    editTextMock
+      .mockResolvedValueOnce('{"transport":"stdio","command":"node"}')
+      .mockResolvedValueOnce("");
+
+    const result = await editMergedServers({ servers: [] }, {}, "linux");
+
+    expect(result.updatedConfig).toEqual({ servers: [] });
+    expect(result.manualEdits.created).toEqual(new Set());
+    expect(result.manualEdits.edited).toEqual(new Set());
+    expect(result.manualEdits.skipped).toEqual(new Set());
   });
 
   it("returns to the menu after an edit", async () => {
@@ -71,6 +142,7 @@ describe("editMergedServers", () => {
     const result = await editMergedServers(merged, {}, "linux");
 
     expect(result.updatedConfig.servers.find((server) => server.name === "alpha")?.command).toBe("edited");
+    expect(result.manualEdits.created.size).toBe(0);
     expect(result.manualEdits.edited.has("alpha")).toBe(true);
     expect(select).toHaveBeenCalledTimes(2);
     expect(editTextMock.mock.calls[0]![0].split("\n")[0]).toBe(SKIP_HEADER);

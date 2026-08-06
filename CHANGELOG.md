@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.5.0] - 2026-08-06
+
+### Added
+
+- Add MCP servers interactively in both direct `edit` mode and migration pre-summary management by entering a name, choosing a transport, and editing a transport-specific JSON template.
+
+### Changed
+
+- Direct-edit and migration summaries now account for manually added servers, and migration editing remains available when there are no imported changes.
+
 ## [0.4.0] - 2026-07-30
 
 ### Added

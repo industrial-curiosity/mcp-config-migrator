@@ -9,6 +9,16 @@ export type { ManualEdits };
 
 export const SKIP_HEADER = "// To SKIP this server, clear all content and save.";
 
+function uniqueAction(base: string, names: Iterable<string>): string {
+  const existing = new Set(names);
+  let action = base;
+  let suffix = 2;
+  while (existing.has(action)) {
+    action = `${base}-${suffix++}`;
+  }
+  return action;
+}
+
 /** Returns true when the editor content (after stripping the skip header) signals that the server should be omitted. */
 export function isSkipSignal(text: string): boolean {
   const body = text.startsWith(SKIP_HEADER) ? text.slice(SKIP_HEADER.length) : text;
@@ -56,23 +66,67 @@ async function editServer(
   }
 }
 
+async function addServer(
+  serverMap: Map<string, NormalizedMcpServer>,
+  env: NodeJS.ProcessEnv,
+  platform: NodeJS.Platform,
+): Promise<NormalizedMcpServer | "skip"> {
+  const nameInput = await p.text({
+    message: "Name for the new MCP server:",
+    validate: (value) => {
+      const name = value?.trim() ?? "";
+      if (name === "") return "A server name is required";
+      if (serverMap.has(name)) return `A server named "${name}" already exists`;
+      return undefined;
+    },
+  });
+  const name = unwrap(nameInput).trim();
+  const transport = unwrap(
+    await p.select<"stdio" | "http" | "sse">({
+      message: `Transport for "${name}":`,
+      options: [
+        { value: "stdio", label: "stdio" },
+        { value: "http", label: "http" },
+        { value: "sse", label: "sse" },
+      ],
+    }),
+  );
+  const template: NormalizedMcpServer =
+    transport === "stdio"
+      ? { name, transport, command: "" }
+      : { name, transport, url: "" };
+  return editServer(template, env, platform);
+}
+
 export async function editMergedServers(
   merged: NormalizedConfig,
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,
 ): Promise<{ updatedConfig: NormalizedConfig; manualEdits: ManualEdits }> {
-  const manualEdits: ManualEdits = { edited: new Set(), skipped: new Set() };
+  const manualEdits: ManualEdits = { created: new Set(), edited: new Set(), skipped: new Set() };
   const serverMap = new Map(merged.servers.map((s) => [s.name, s]));
 
-  while (serverMap.size > 0) {
-    const selected = await p.select<string | "done">({
+  for (;;) {
+    const addAction = uniqueAction("add", serverMap.keys());
+    const finishAction = uniqueAction("done", [...serverMap.keys(), addAction]);
+    const selected = await p.select<string>({
       message: "Manage MCP servers (select one to edit, or finish):",
       options: [
         ...[...serverMap.keys()].map((name) => ({ value: name, label: name })),
-        { value: "done", label: "Finish editing" },
+        { value: addAction, label: "Add a server" },
+        { value: finishAction, label: "Finish editing" },
       ],
     });
-    if (p.isCancel(selected) || selected === "done") break;
+    if (p.isCancel(selected) || selected === finishAction) break;
+
+    if (selected === addAction) {
+      const result = await addServer(serverMap, env, platform);
+      if (result !== "skip") {
+        manualEdits.created.add(result.name);
+        serverMap.set(result.name, result);
+      }
+      continue;
+    }
 
     const name = selected;
     const server = serverMap.get(name);
@@ -82,7 +136,11 @@ export async function editMergedServers(
 
     if (result === "skip") {
       p.log.info(`Skipped: ${name}`);
-      manualEdits.skipped.add(name);
+      if (manualEdits.created.delete(name)) {
+        manualEdits.edited.delete(name);
+      } else {
+        manualEdits.skipped.add(name);
+      }
       serverMap.delete(name);
     } else {
       manualEdits.edited.add(name);
@@ -90,9 +148,7 @@ export async function editMergedServers(
     }
   }
 
-  const updatedServers = merged.servers
-    .filter((s) => serverMap.has(s.name))
-    .map((s) => serverMap.get(s.name)!);
+  const updatedServers = [...serverMap.values()];
 
   return { updatedConfig: { servers: updatedServers }, manualEdits };
 }

@@ -112,16 +112,21 @@ async function runFlow(options: RunCliOptions): Promise<void> {
 
   const classifications = classify(sourceConfig, targetConfig);
 
-  if (isNoOp(classifications)) {
-    p.outro("Nothing to migrate — target already has every source entry.");
-    return;
-  }
-
   const conflicts = classifications.filter((entry) => entry.kind === "conflict");
   const resolutions = await resolveConflicts(conflicts, env, platform);
 
   const merged = applyMerge(targetConfig, classifications, resolutions);
   const { updatedConfig, manualEdits } = await editMergedServers(merged, env, platform);
+
+  if (
+    isNoOp(classifications) &&
+    manualEdits.created.size === 0 &&
+    manualEdits.edited.size === 0 &&
+    manualEdits.skipped.size === 0
+  ) {
+    p.outro("Nothing to migrate — target already has every source entry.");
+    return;
+  }
 
   const summary = summarize(classifications, resolutions, manualEdits);
   const formatCategory = (label: string, category: { count: number; names: string[] }): string =>
@@ -146,7 +151,13 @@ async function runFlow(options: RunCliOptions): Promise<void> {
   }
 
   if (targetAdapter.id === "claude-code" && target.scopeId === "project") {
-    const names = changedServerNames(classifications, resolutions);
+    const names = [
+      ...new Set([
+        ...changedServerNames(classifications, resolutions),
+        ...manualEdits.created,
+        ...manualEdits.edited,
+      ]),
+    ];
     if (names.length > 0) {
       p.note(
         [

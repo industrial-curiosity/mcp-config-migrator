@@ -47,10 +47,31 @@ describe("runEditCli", () => {
     await withTmpDir(async (dir) => {
       const path = join(dir, "mcp.json");
       await writeFile(path, JSON.stringify({ mcpServers: { alpha: { command: "node" } } }));
-      select.mockResolvedValueOnce("cursor").mockResolvedValueOnce("global").mockResolvedValueOnce("alpha");
+      select.mockResolvedValueOnce("cursor").mockResolvedValueOnce("global").mockResolvedValueOnce("alpha").mockResolvedValueOnce("done");
       text.mockResolvedValueOnce(path); confirm.mockResolvedValueOnce(true); editTextMock.mockResolvedValueOnce("");
       await runEditCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPath(dir) });
       expect(JSON.parse(await readFile(path, "utf8")).mcpServers).toEqual({});
+    });
+  });
+
+  it("adds a server and includes it in the direct-edit summary", async () => {
+    await withTmpDir(async (dir) => {
+      const path = join(dir, "mcp.json");
+      await writeFile(path, JSON.stringify({ mcpServers: {} }));
+      select
+        .mockResolvedValueOnce("cursor")
+        .mockResolvedValueOnce("global")
+        .mockResolvedValueOnce("add")
+        .mockResolvedValueOnce("stdio")
+        .mockResolvedValueOnce("done");
+      text.mockResolvedValueOnce(path).mockResolvedValueOnce("gamma");
+      editTextMock.mockResolvedValueOnce('{"transport":"stdio","command":"node"}');
+      confirm.mockResolvedValueOnce(true);
+
+      await runEditCli({ cwd: dir, env: {}, platform: "linux", settingsPath: await settingsPath(dir) });
+
+      expect(JSON.parse(await readFile(path, "utf8")).mcpServers).toEqual({ gamma: { command: "node" } });
+      expect(p.note).toHaveBeenCalledWith(expect.stringContaining("Added (1): gamma"), "Edit summary");
     });
   });
 

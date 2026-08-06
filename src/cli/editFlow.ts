@@ -19,10 +19,12 @@ async function runEditFlow(options: RunCliOptions): Promise<void> {
   const config = await adapter.load(target.path);
   const { updatedConfig, manualEdits } = await editMergedServers(config, env, platform);
 
+  const added = [...manualEdits.created];
   const changed = [...manualEdits.edited];
   const deleted = [...manualEdits.skipped];
   p.note(
     [
+      added.length === 0 ? "Added (0)" : `Added (${added.length}): ${added.join(", ")}`,
       changed.length === 0 ? "Edited (0)" : `Edited (${changed.length}): ${changed.join(", ")}`,
       deleted.length === 0 ? "Deleted (0)" : `Deleted (${deleted.length}): ${deleted.join(", ")}`,
     ].join("\n"),
@@ -34,7 +36,7 @@ async function runEditFlow(options: RunCliOptions): Promise<void> {
     return;
   }
 
-  const affected = [...new Set([...changed, ...deleted])];
+  const affected = [...new Set([...added, ...changed, ...deleted])];
   if (adapter.id === "claude-code" && target.scopeId === "project" && affected.length > 0) {
     p.note(
       [
